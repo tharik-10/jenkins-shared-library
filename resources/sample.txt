@@ -1,0 +1,1 @@
+this is the sample text file in this folder we can add the templates to use in our pipeline also 
