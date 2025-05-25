@@ -9,7 +9,7 @@ def call(String gitUser, String gitEmail, String commitMessage, String credId, S
 
     withCredentials([usernamePassword(credentialsId: credId, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
         sh '''
-           git remote set-url origin https://${USERNAME}:${PASSWORD}@${repoUrl}
+           git remote set-url origin https://tharik-10:${PASSWORD}@github.com/tharik-10/sprint-3.git
            git checkout ${branch}
            git pull origin ${branch}
            git push origin ${branch} || echo "Nothing to push."
