@@ -6,6 +6,6 @@ def call(Map config = [:]) {
 
     stage('Build') {
         echo 'Building the salary-api (skipping tests)...'
-        sh 'mvn clean install -DskipTests=true'
+        sh 'mvn clean install'
     }
 }
