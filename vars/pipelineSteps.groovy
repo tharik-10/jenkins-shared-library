@@ -6,6 +6,6 @@ def cloneRepository(String repoUrl, String branch = 'main') {
 
 def buildProject() {
     echo '🔧 Building the project (skipping tests)...'
-    sh 'mvn clean install -DskipTests'
+    sh 'mvn clean install'
 }
 
