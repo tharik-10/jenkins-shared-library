@@ -59,7 +59,12 @@ class AuditSteps implements Serializable {
                     echo "<h2>Attendance API - pip-audit Report</h2><pre>$(cat pip-audit-report.json | jq .)</pre>" > ../html-reports/attendance/index.html
                     deactivate
                 '''
-                script.archiveArtifacts artifacts: 'pip-audit-report.json', allowEmptyArchive: true
+
+                if (script.params.ARCHIVE_REPORTS.toBoolean()) {
+                    script.archiveArtifacts artifacts: 'pip-audit-report.json', allowEmptyArchive: true
+                } else {
+                    script.echo '📁 Skipping archiving Attendance report as per parameter setting.'
+                }
             }
         }
     }
@@ -78,7 +83,12 @@ class AuditSteps implements Serializable {
                     echo "<h2>Notification Worker - pip-audit Report</h2><pre>$(cat pip-audit-report.json | jq .)</pre>" > ../html-reports/notification/index.html
                     deactivate
                 '''
-                script.archiveArtifacts artifacts: 'pip-audit-report.json', allowEmptyArchive: true
+
+                if (script.params.ARCHIVE_REPORTS.toBoolean()) {
+                    script.archiveArtifacts artifacts: 'pip-audit-report.json', allowEmptyArchive: true
+                } else {
+                    script.echo '📁 Skipping archiving Notification report as per parameter setting.'
+                }
             }
         }
     }
