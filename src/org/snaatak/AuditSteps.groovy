@@ -9,9 +9,28 @@ class AuditSteps implements Serializable {
 
     def installPackages() {
         script.stage('Install Packages') {
+            script.echo '🔍 Checking and installing required packages if not present...'
             script.sh '''
+                #!/bin/bash
+                set -e
+
+                install_if_missing() {
+                    PACKAGE=$1
+                    if ! dpkg -s $PACKAGE >/dev/null 2>&1; then
+                        echo "📦 $PACKAGE not found. Installing..."
+                        sudo apt-get install -y $PACKAGE
+                    else
+                        echo "✅ $PACKAGE is already installed."
+                    fi
+                }
+
+                echo "🔄 Running apt-get update..."
                 sudo apt-get update
-                sudo apt-get install -y python3 python3-pip python3-venv jq
+
+                install_if_missing python3
+                install_if_missing python3-pip
+                install_if_missing python3-venv
+                install_if_missing jq
             '''
         }
     }
