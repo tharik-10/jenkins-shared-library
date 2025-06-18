@@ -60,10 +60,10 @@ class AuditSteps implements Serializable {
                     deactivate
                 '''
 
-                if (script.params.ARCHIVE_REPORTS.toBoolean()) {
+                if (script.params.ARCHIVE_REPORTS?.toString() == 'true') {
                     script.archiveArtifacts artifacts: 'pip-audit-report.json', allowEmptyArchive: true
                 } else {
-                    script.echo '📁 Skipping archiving Attendance report as per parameter setting.'
+                    script.echo '📁 Skipping archiving as ARCHIVE_REPORTS is false or not selected.'
                 }
             }
         }
@@ -84,10 +84,10 @@ class AuditSteps implements Serializable {
                     deactivate
                 '''
 
-                if (script.params.ARCHIVE_REPORTS.toBoolean()) {
+                if (script.params.ARCHIVE_REPORTS?.toString() == 'true') {
                     script.archiveArtifacts artifacts: 'pip-audit-report.json', allowEmptyArchive: true
                 } else {
-                    script.echo '📁 Skipping archiving Notification report as per parameter setting.'
+                    script.echo '📁 Skipping archiving as ARCHIVE_REPORTS is false or not selected.'
                 }
             }
         }
