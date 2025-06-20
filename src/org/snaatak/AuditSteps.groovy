@@ -6,13 +6,6 @@ class AuditSteps implements Serializable {
     AuditSteps(script) {
         this.script = script
     }
-    
-    def cleanWorkspace() {
-        script.stage('Clean Workspace') {
-            script.echo '🧹 Cleaning up workspace...'
-            script.deleteDir()
-        }
-    }
 
     def installPackages() {
         script.stage('Install Packages') {
@@ -39,16 +32,6 @@ class AuditSteps implements Serializable {
                 install_if_missing python3-venv
                 install_if_missing jq
             '''
-        }
-    }
-
-    def cloneRepositories(String attendanceRepo, String notificationRepo) {
-        script.stage('Clone Repositories') {
-            script.sh """
-                rm -rf attendance-api notification-worker
-                git clone ${attendanceRepo}
-                git clone ${notificationRepo}
-            """
         }
     }
 
