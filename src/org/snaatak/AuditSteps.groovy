@@ -6,6 +6,13 @@ class AuditSteps implements Serializable {
     AuditSteps(script) {
         this.script = script
     }
+    
+    def cleanWorkspace() {
+        script.stage('Clean Workspace') {
+            script.echo '🧹 Cleaning up workspace...'
+            script.deleteDir()
+        }
+    }
 
     def installPackages() {
         script.stage('Install Packages') {
