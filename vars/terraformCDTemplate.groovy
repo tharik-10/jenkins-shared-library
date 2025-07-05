@@ -14,6 +14,13 @@ def call(Map config = [:]) {
         steps.echo "Code checkout completed using SCM"
       }
 
+      stage('Terraform Init') {
+        tf.terraformInit(
+          directory: MODULE_DIR,
+          backendConfig: config.get('backendConfig', [:])
+        )
+      }
+
       stage("Terraform ${ACTION.capitalize()}") {
         if (ACTION == 'apply') {
           tf.terraformApply(directory: MODULE_DIR, vars: TF_VARS)
