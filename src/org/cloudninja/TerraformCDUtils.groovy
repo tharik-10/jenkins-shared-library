@@ -7,6 +7,12 @@ class TerraformCDUtils implements Serializable {
     this.steps = steps
   }
 
+  def terraformInit(Map config) {
+    def dir = config.directory
+    def backendConfig = config.backendConfig?.collect { k, v -> "-backend-config=${k}=${v}" }?.join(' ') ?: ''
+    steps.sh "cd ${dir} && terraform init ${backendConfig}"
+  }
+
   def terraformApply(Map config) {
     def dir = config.directory
     def varsArgs = config.vars?.collect { k, v -> "-var '${k}=${v}'" }?.join(' ') ?: ''
