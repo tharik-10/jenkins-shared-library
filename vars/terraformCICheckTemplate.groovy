@@ -6,7 +6,7 @@ def call(Map config = [:]) {
   def TF_VARS       = config.get('tfVars', [:])
   def PLAN_OUT_FILE = config.get('planOutFile', 'tfplan.out')
 
-  def tf = new org.snaatak.TerraformUtils(steps)
+  def tf = new org.snaatak.TerraformCIUtils(steps)
 
   node {
     try {
