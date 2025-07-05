@@ -9,6 +9,11 @@ def call(Map config = [:]) {
 
   node {
     try {
+      stage('Checkout Code') {
+        steps.checkout scm
+        steps.echo "Code checkout completed using SCM"
+      }
+
       stage("Terraform ${ACTION.capitalize()}") {
         if (ACTION == 'apply') {
           tf.terraformApply(directory: MODULE_DIR, vars: TF_VARS)
