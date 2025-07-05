@@ -1,9 +1,9 @@
 package org.snaatak
 
-class TerraformUtils implements Serializable {
+class TerraformCIUtils implements Serializable {
   def steps
 
-  TerraformUtils(steps) {
+  TerraformCIUtils(steps) {
     this.steps = steps
   }
 
