@@ -10,6 +10,10 @@ def call(Map config = [:]) {
 
   node {
     try {
+      stage('Checkout Code') {
+        checkout scm
+      }
+
       stage('Terraform Init') {
         tf.terraformInit(
           directory: MODULE_DIR,
