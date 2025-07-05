@@ -1,4 +1,4 @@
-package org.snaatak
+package org.cloudninja
 
 class TerraformCIUtils implements Serializable {
   def steps
