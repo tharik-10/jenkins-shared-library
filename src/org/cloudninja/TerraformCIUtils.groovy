@@ -29,8 +29,9 @@ class TerraformCIUtils implements Serializable {
     def dir = config.directory
     steps.sh """
       cd ${dir}
+      export PATH=\$HOME/.local/bin:\$PATH
       if ! command -v checkov >/dev/null 2>&1; then
-        pip install checkov --quiet
+        pip install --user checkov --quiet
       fi
       checkov -d . > checkov-report.txt || true
     """
