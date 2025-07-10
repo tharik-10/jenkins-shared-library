@@ -32,9 +32,9 @@ class TerraformCIUtils implements Serializable {
       if ! command -v checkov >/dev/null 2>&1; then
         pip install checkov --quiet
       fi
-      checkov -d . -o json > checkov-report.json || true
+      checkov -d . > checkov-report.txt || true
     """
-    steps.archiveArtifacts artifacts: "${dir}/checkov-report.json", fingerprint: true
+    steps.archiveArtifacts artifacts: "${dir}/checkov-report.txt", fingerprint: true
   }
 
   def runTFLint(Map config) {
