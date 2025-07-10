@@ -27,13 +27,27 @@ class TerraformCIUtils implements Serializable {
 
   def runCheckov(Map config) {
     def dir = config.directory
-    steps.sh "cd ${dir} && checkov -d . -o json > checkov-report.json || true"
+    steps.sh """
+      cd ${dir}
+      if ! command -v checkov >/dev/null 2>&1; then
+        pip install checkov --quiet
+      fi
+      checkov -d . -o json > checkov-report.json || true
+    """
     steps.archiveArtifacts artifacts: "${dir}/checkov-report.json", fingerprint: true
   }
 
   def runTFLint(Map config) {
     def dir = config.directory
-    steps.sh "cd ${dir} && tflint --init && tflint > tflint.log || true"
+    steps.sh """
+      cd ${dir}
+      if ! command -v tflint >/dev/null 2>&1; then
+        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+        export PATH=$PATH:\$HOME/.tflint/bin
+      fi
+      tflint --init
+      tflint > tflint.log || true
+    """
     steps.archiveArtifacts artifacts: "${dir}/tflint.log", fingerprint: true
   }
 }
