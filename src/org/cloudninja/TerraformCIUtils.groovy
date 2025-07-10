@@ -42,8 +42,14 @@ class TerraformCIUtils implements Serializable {
     steps.sh """
       cd ${dir}
       if ! command -v tflint >/dev/null 2>&1; then
-        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+        mkdir -p \$HOME/.local/bin
+        curl -sL https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip -o tflint.zip
+        unzip -o tflint.zip -d \$HOME/.local/bin
+        chmod +x \$HOME/.local/bin/tflint
+        rm -f tflint.zip
       fi
+
+      export PATH=\$HOME/.local/bin:\$PATH
       tflint --init
       tflint > tflint.log || true
     """
