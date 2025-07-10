@@ -10,33 +10,27 @@ def call(Map config = [:]) {
 
   node {
     try {
-      stage('Checkout Code') {
-        checkout scm
-      }
-
       stage('Terraform Init') {
-        tf.terraformInit(
-          directory: MODULE_DIR,
-          backendConfig: BACKEND_CONF
-        )
+        tf.terraformInit(directory: MODULE_DIR, backendConfig: BACKEND_CONF)
       }
 
       stage('Terraform Validate') {
-        tf.terraformValidate(
-          directory: MODULE_DIR
-        )
+        tf.terraformValidate(directory: MODULE_DIR)
       }
 
       stage('Terraform Plan') {
-        tf.terraformPlan(
-          directory: MODULE_DIR,
-          vars: TF_VARS,
-          outFile: PLAN_OUT_FILE
-        )
+        tf.terraformPlan(directory: MODULE_DIR, vars: TF_VARS, outFile: PLAN_OUT_FILE)
+      }
+
+      stage('TFLint Check') {
+        tf.runTFLint(directory: MODULE_DIR)
+      }
+
+      stage('Checkov Scan') {
+        tf.runCheckov(directory: MODULE_DIR)
       }
 
       currentBuild.result = 'SUCCESS'
-
     } catch (err) {
       currentBuild.result = 'FAILURE'
       throw err
