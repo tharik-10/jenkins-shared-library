@@ -1,9 +1,13 @@
-package org.cloudninja.terraform.common
+package org.cloudninja.terraform.ci
 
-class wsclean {
+class wsclean implements Serializable {
+    def steps
+
+    wsclean(steps) {
+        this.steps = steps
+    }
+
     def clean() {
-        stage('Clean Workspace') {
-            cleanWs() // Correct built-in Jenkins command
-        }
+        steps.sh 'rm -rf * .terraform*'
     }
 }
