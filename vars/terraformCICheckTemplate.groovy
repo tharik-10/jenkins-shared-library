@@ -10,14 +10,14 @@ def call(Map args) {
 
     node {
         // Instantiate helper classes
-        def Clean    = new wsclean(this)
-        def Clone    = new gitclone(this)
-        def Init     = new init(this)
-        def Fmt      = new fmt(this)
-        def Validate = new validate(this)
-        def Lint     = new lint(this)
-        def Checkov  = new checkov(this)
-        def Plan     = new plan(this)
+        def Clean    = new wsclean()
+        def Clone    = new gitclone()
+        def Init     = new init()
+        def Fmt      = new fmt()
+        def Validate = new validate()
+        def Lint     = new lint()
+        def Checkov  = new checkov()
+        def Plan     = new plan()
 
         // Run CI steps
         Clean.clean()
