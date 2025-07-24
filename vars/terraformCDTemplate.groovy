@@ -1,40 +1,46 @@
-def call(Map config = [:]) {
-  def steps = this
+import org.cloudninja.terraform.common.*
+import org.cloudninja.terraform.cd.*
 
-  def MODULE_DIR = config.get('tfModuleDir', '')
-  def TF_VARS    = config.get('tfVars', [:])
-  def ACTION     = config.get('action', 'apply')  // accepts "apply" or "destroy"
+def call(Map args) {
+    String terraformDir     = args.terraformDir
+    String branch           = args.branch
+    String repoUrl          = args.repoUrl
+    String credentialsId    = args.credentialsId ?: null
+    String tfvarsFile       = args.tfvarsFile ?: ''
+    boolean enableDestroy   = args.get('enableDestroy', false)
+    String approvalMessage  = args.get('approvalMessage', 'Approve Terraform Apply?')
+    String exactStatePath   = args.get('exactStatePath', '') // Newly added line
 
-  def tf = new org.cloudninja.TerraformCDUtils(steps)
+    node {
+        // Instantiate helper classes
+        def Clean    = new wsclean()
+        def Clone    = new gitclone()
+        def Init     = new init()
+        def Plan     = new plan()
+        def Apply    = new terraform_apply()
+        def Destroy  = new terraform_destroy()
+        def Approve  = new manualapproval()
 
-  node {
-    try {
-      stage('Checkout Code') {
-        steps.checkout scm
-        steps.echo "Code checkout completed using SCM"
-      }
-
-      stage('Terraform Init') {
-        tf.terraformInit(
-          directory: MODULE_DIR,
-          backendConfig: config.get('backendConfig', [:])
-        )
-      }
-
-      stage("Terraform ${ACTION.capitalize()}") {
-        if (ACTION == 'apply') {
-          tf.terraformApply(directory: MODULE_DIR, vars: TF_VARS)
-        } else if (ACTION == 'destroy') {
-          tf.terraformDestroy(directory: MODULE_DIR, vars: TF_VARS)
-        } else {
-          error "Unsupported action: ${ACTION}. Use 'apply' or 'destroy'."
+        // ❌ Skip cleanWs if destroy mode is enabled
+        if (!enableDestroy) {
+            Clean.clean()
         }
-      }
 
-      currentBuild.result = 'SUCCESS'
-    } catch (err) {
-      currentBuild.result = 'FAILURE'
-      throw err
+        Clone.clone(branch, repoUrl, credentialsId)
+        Init.terraformInit(terraformDir)
+
+        // Only plan if not destroying
+        if (!enableDestroy) {
+            Plan.terraformPlan(terraformDir, tfvarsFile)
+        }
+
+        // Manual approval before apply/destroy
+        Approve(approvalMessage)
+
+        if (enableDestroy) {
+            Destroy(terraformDir, tfvarsFile, exactStatePath) // ✅ Pass exactStatePath here
+        } else {
+            Apply(terraformDir, tfvarsFile)
+        }
     }
-  }
 }
