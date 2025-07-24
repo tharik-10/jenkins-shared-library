@@ -1,7 +1,9 @@
 package org.cloudninja.terraform.common
 
-def clean() {
-    stage('Clean Workspace') {
-        clean()
+class wsclean {
+    def clean() {
+        stage('Clean Workspace') {
+            cleanWs() // Correct built-in Jenkins command
+        }
     }
 }
