@@ -1,39 +1,32 @@
-def call(Map config = [:]) {
-  def steps = this
+import org.cloudninja.terraform.common.*
+import org.cloudninja.terraform.ci.*
 
-  def MODULE_DIR    = config.get('tfModuleDir', '')
-  def BACKEND_CONF  = config.get('backendConfig', [:])
-  def TF_VARS       = config.get('tfVars', [:])
-  def PLAN_OUT_FILE = config.get('planOutFile', 'tfplan.out')
+def call(Map args) {
+    String terraformDir  = args.terraformDir
+    String branch        = args.branch
+    String repoUrl       = args.repoUrl
+    String credentialsId = args.credentialsId ?: null
+    String tfvarsFile    = args.tfvarsFile ?: ''  
 
-  def tf = new org.cloudninja.TerraformCIUtils(steps)
+    node {
+        // Instantiate helper classes
+        def Clean    = new wsclean()
+        def Clone    = new gitclone()
+        def Init     = new init()
+        def Fmt      = new fmt()
+        def Validate = new validate()
+        def Lint     = new lint()
+        def Checkov  = new checkov()
+        def Plan     = new plan()
 
-  node {
-    try {
-      stage('Terraform Init') {
-        tf.terraformInit(directory: MODULE_DIR, backendConfig: BACKEND_CONF)
-      }
-
-      stage('Terraform Validate') {
-        tf.terraformValidate(directory: MODULE_DIR)
-      }
-
-      stage('Terraform Plan') {
-        tf.terraformPlan(directory: MODULE_DIR, vars: TF_VARS, outFile: PLAN_OUT_FILE)
-      }
-
-      stage('TFLint Check') {
-        tf.runTFLint(directory: MODULE_DIR)
-      }
-
-      stage('Checkov Scan') {
-        tf.runCheckov(directory: MODULE_DIR)
-      }
-
-      currentBuild.result = 'SUCCESS'
-    } catch (err) {
-      currentBuild.result = 'FAILURE'
-      throw err
+        // Run CI steps
+        Clean.clean()
+        Clone.clone(branch, repoUrl, credentialsId)
+        Init.terraformInit(terraformDir)
+        Fmt.terraformFormat(terraformDir)
+        Validate.terraformValidate(terraformDir)
+        Lint.tflintScan(terraformDir)
+        Checkov.terraformcheckov(terraformDir)
+        Plan.terraformPlan(terraformDir, tfvarsFile)  
     }
-  }
 }
