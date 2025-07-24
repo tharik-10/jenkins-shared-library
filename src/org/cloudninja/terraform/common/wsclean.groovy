@@ -1,4 +1,4 @@
-package org.cloudninja.terraform.ci
+package org.cloudninja.terraform.common
 
 class wsclean implements Serializable {
     def steps
