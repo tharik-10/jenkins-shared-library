@@ -9,6 +9,7 @@ def call(String terraform_path, String tfvarsFile = "", String exactStatePath = 
             cd "${exactStatePath}"
 
             terraform init -input=false
+
             terraform destroy -auto-approve -var-file=${tfvarsFile}
         """
     }
