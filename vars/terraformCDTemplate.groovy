@@ -38,9 +38,9 @@ def call(Map args) {
         Approve(approvalMessage)
 
         if (enableDestroy) {
-            Destroy.call(exactStatePath, tfvarsFile, exactStatePath) // ✅ Pass exactStatePath here
+            Destroy(terraformDir, tfvarsFile, exactStatePath) // ✅ Pass exactStatePath here
         } else {
-            Apply(exactStatePath, tfvarsFile)
+            Apply(terraformDir, tfvarsFile)
         }
     }
 }
