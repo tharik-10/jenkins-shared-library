@@ -61,11 +61,13 @@ def call(Map config) {
                             builders."${params.LANGUAGE.capitalize()}Builder".build()
 
                             docker.DockerBuild.buildAndPush(
+                                env.ECR_URL,
                                 env.APP_NAME,
                                 env.IMAGE_TAG
                             )
 
                             scanners.ImageScanner.scan(
+                                env.ECR_URL,
                                 env.APP_NAME,
                                 env.IMAGE_TAG
                             )
