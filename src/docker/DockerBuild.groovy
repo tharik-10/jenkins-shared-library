@@ -1,12 +1,12 @@
 package docker
 
 class DockerBuild {
-    static void buildAndPush(String ecrUrl, String app, String tag) {
-        sh """
+    static void buildAndPush(def steps, String ecr, String app, String tag) {
+        steps.echo "Building and Pushing Docker image to ECR..."
+        steps.sh """
         docker build -t ${app}:${tag} .
-        docker tag ${app}:${tag} ${ecrUrl}/${app}:${tag}
-        docker push ${ecrUrl}/${app}:${tag}
+        docker tag ${app}:${tag} ${ecr}/${app}:${tag}
+        docker push ${ecr}/${app}:${tag}
         """
     }
 }
-
