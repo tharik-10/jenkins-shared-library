@@ -1,7 +1,10 @@
 package builders
 
-class JavaBuilder {
+class NodeBuilder {
     static void build() {
-        sh 'mvn clean package -DskipTests'
+        sh '''
+        npm ci
+        npm run build
+        '''
     }
 }
