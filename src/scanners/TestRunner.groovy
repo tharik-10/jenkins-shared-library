@@ -1,21 +1,25 @@
 package scanners
 
 class TestRunner {
-    static void run(String lang) {
-        switch(lang) {
+
+    static void run(def script, String language) {
+
+        switch(language) {
             case 'python':
-                sh 'pytest'
+                script.sh 'pytest'
                 break
+
             case 'go':
-                sh 'go test ./...'
+                script.sh 'go test ./...'
                 break
+
             case 'java':
-                sh 'mvn test'
+                script.sh 'mvn test'
                 break
+
             case 'node':
-                sh 'npm test -- --watch=false'
+                script.sh 'npm test'
                 break
         }
     }
 }
-
