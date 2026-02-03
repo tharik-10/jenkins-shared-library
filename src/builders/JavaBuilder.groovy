@@ -2,7 +2,7 @@ package builders
 
 class NodeBuilder {
     static void build() {
-        sh '''
+        script.sh '''
         npm ci
         npm run build
         '''
