@@ -13,10 +13,10 @@ class LintScanner {
                 sh 'mvn checkstyle:check'
                 break
             case 'node':
-                sh 'npm install && npm run lint'
+                sh 'npm ci && npm run lint'
                 break
             default:
-                error "Unsupported language"
+                error "Unsupported language: ${lang}"
         }
     }
 }
