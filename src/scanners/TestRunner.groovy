@@ -5,10 +5,10 @@ class TestRunner {
         steps.echo "Running Unit Tests for ${lang}..."
         switch(lang) {
             case 'python':
-                // Install pytest first, then run it
                 steps.sh '''
                 python3 -m pip install --user pytest
-                python3 -m pytest
+                # Use . to search the entire service directory
+                python3 -m pytest . --import-mode=importlib
                 '''
                 break
             case 'go':
