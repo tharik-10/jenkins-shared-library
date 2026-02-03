@@ -1,10 +1,10 @@
 package builders
 
 class NodeBuilder {
-    static void build() {
-        script.sh '''
-          npm install
-          npm run build
+    static void build(def steps) {
+        steps.sh '''
+        npm ci
+        npm run build
         '''
     }
 }
