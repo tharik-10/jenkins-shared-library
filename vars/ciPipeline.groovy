@@ -1,10 +1,24 @@
 def call(Map config = [:]) {
 
+    /* ==========================
+       Service → Directory Map
+       ========================== */
     def serviceDirMap = [
         attendance: 'attendance-api',
         employee  : 'employee-api',
         salary    : 'salary-api',
         frontend  : 'frontend'
+    ]
+
+    /* ==========================
+       Service → Language Map
+       (Avoids wrong selection)
+       ========================== */
+    def serviceLangMap = [
+        attendance: 'python',
+        employee  : 'go',
+        salary    : 'java',
+        frontend  : 'node'
     ]
 
     pipeline {
@@ -13,24 +27,31 @@ def call(Map config = [:]) {
         parameters {
             choice(
                 name: 'SERVICE',
-                choices: serviceDirMap.keySet() as List
-            )
-            choice(
-                name: 'LANGUAGE',
-                choices: ['python','go','java','node']
+                choices: serviceDirMap.keySet() as List,
+                description: 'Select microservice to build'
             )
             choice(
                 name: 'ENV',
-                choices: ['dev','qa','prod']
+                choices: ['dev','qa','prod'],
+                description: 'Target environment'
             )
-            booleanParam(name: 'SKIP_TESTS', defaultValue: false)
-            booleanParam(name: 'SKIP_SCAN', defaultValue: false)
+            booleanParam(
+                name: 'SKIP_TESTS',
+                defaultValue: false,
+                description: 'Skip unit tests'
+            )
+            booleanParam(
+                name: 'SKIP_SCAN',
+                defaultValue: false,
+                description: 'Skip security scans'
+            )
         }
 
         environment {
             SERVICE_DIR = "${serviceDirMap[params.SERVICE]}"
+            LANGUAGE    = "${serviceLangMap[params.SERVICE]}"
             APP_NAME    = "${params.SERVICE}-api"
-            IMAGE_TAG   = "${env.GIT_COMMIT}"   // ✅ ONLY ONCE
+            IMAGE_TAG   = "${env.GIT_COMMIT}"
             ECR_URL     = "123456789012.dkr.ecr.ap-south-1.amazonaws.com"
         }
 
@@ -47,25 +68,33 @@ def call(Map config = [:]) {
                     script {
                         dir(env.SERVICE_DIR) {
 
-                            scanners.LintScanner.run(this, params.LANGUAGE)
+                            /* ---------- LINT ---------- */
+                            scanners.LintScanner.run(this, env.LANGUAGE)
 
+                            /* ---------- TESTS ---------- */
                             if (!params.SKIP_TESTS) {
-                                scanners.TestRunner.run(this, params.LANGUAGE)
+                                scanners.TestRunner.run(this, env.LANGUAGE)
                             }
 
+                            /* ---------- SECURITY SCAN ---------- */
                             if (!params.SKIP_SCAN) {
-                                scanners.SecurityScanner.run()
+                                scanners.SecurityScanner.run(this)
                             }
 
-                            builders."${params.LANGUAGE.capitalize()}Builder".build()
+                            /* ---------- BUILD ---------- */
+                            builders."${env.LANGUAGE.capitalize()}Builder".build(this)
 
+                            /* ---------- DOCKER BUILD & PUSH ---------- */
                             docker.DockerBuild.buildAndPush(
+                                this,
                                 env.ECR_URL,
                                 env.APP_NAME,
                                 env.IMAGE_TAG
                             )
 
+                            /* ---------- IMAGE SCAN ---------- */
                             scanners.ImageScanner.scan(
+                                this,
                                 env.ECR_URL,
                                 env.APP_NAME,
                                 env.IMAGE_TAG
@@ -88,6 +117,15 @@ def call(Map config = [:]) {
                     }'
                     """
                 }
+            }
+        }
+
+        post {
+            success {
+                echo "✅ CI completed successfully for ${APP_NAME}"
+            }
+            failure {
+                echo "❌ CI failed for ${APP_NAME}"
             }
         }
     }
