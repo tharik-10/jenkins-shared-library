@@ -3,6 +3,12 @@ def call(Map config) {
         agent any
 
         parameters {
+            choice(name: 'SERVICE', choices: [
+                'attendance',
+                'employee',
+                'salary',
+                'frontend'
+            ])
             string(name: 'APP_NAME', defaultValue: config.appName)
             choice(name: 'LANGUAGE', choices: ['python','go','java','node'])
             choice(name: 'ENV', choices: ['dev','qa','prod'])
