@@ -1,23 +1,36 @@
 def call(Map config) {
+
+    def serviceDirMap = [
+        attendance: 'attendance-api',
+        employee  : 'employee-api',
+        salary    : 'salary-api',
+        frontend  : 'frontend'
+    ]
+
     pipeline {
         agent any
 
         parameters {
-            choice(name: 'SERVICE', choices: [
-                'attendance',
-                'employee',
-                'salary',
-                'frontend'
-            ])
-            string(name: 'APP_NAME', defaultValue: config.appName)
-            choice(name: 'LANGUAGE', choices: ['python','go','java','node'])
-            choice(name: 'ENV', choices: ['dev','qa','prod'])
+            choice(
+                name: 'SERVICE',
+                choices: serviceDirMap.keySet() as List
+            )
+            choice(
+                name: 'LANGUAGE',
+                choices: ['python','go','java','node']
+            )
+            choice(
+                name: 'ENV',
+                choices: ['dev','qa','prod']
+            )
             booleanParam(name: 'SKIP_TESTS', defaultValue: false)
             booleanParam(name: 'SKIP_SCAN', defaultValue: false)
         }
 
         environment {
+            APP_NAME   = "${params.SERVICE}-api"
             IMAGE_TAG = "${env.GIT_COMMIT}"
+            SERVICE_DIR = "${serviceDirMap[params.SERVICE]}"
         }
 
         stages {
@@ -28,55 +41,33 @@ def call(Map config) {
                 }
             }
 
-            stage('Lint') {
+            stage('CI Pipeline') {
                 steps {
                     script {
-                        scanners.LintScanner.run(params.LANGUAGE)
-                    }
-                }
-            }
+                        dir(env.SERVICE_DIR) {
 
-            stage('Unit Tests') {
-                when { expression { !params.SKIP_TESTS } }
-                steps {
-                    script {
-                        scanners.TestRunner.run(params.LANGUAGE)
-                    }
-                }
-            }
+                            scanners.LintScanner.run(params.LANGUAGE)
 
-            stage('Security Scan') {
-                when { expression { !params.SKIP_SCAN } }
-                steps {
-                    script {
-                        scanners.SecurityScanner.run()
-                    }
-                }
-            }
+                            if (!params.SKIP_TESTS) {
+                                scanners.TestRunner.run(params.LANGUAGE)
+                            }
 
-            stage('Build') {
-                steps {
-                    script {
-                        builders."${params.LANGUAGE.capitalize()}Builder".build()
-                    }
-                }
-            }
+                            if (!params.SKIP_SCAN) {
+                                scanners.SecurityScanner.run()
+                            }
 
-            stage('Docker Build & Push') {
-                steps {
-                    script {
-                        docker.DockerBuild.buildAndPush(
-                            params.APP_NAME,
-                            IMAGE_TAG
-                        )
-                    }
-                }
-            }
+                            builders."${params.LANGUAGE.capitalize()}Builder".build()
 
-            stage('Image Scan') {
-                steps {
-                    script {
-                        scanners.ImageScanner.scan(params.APP_NAME, IMAGE_TAG)
+                            docker.DockerBuild.buildAndPush(
+                                env.APP_NAME,
+                                env.IMAGE_TAG
+                            )
+
+                            scanners.ImageScanner.scan(
+                                env.APP_NAME,
+                                env.IMAGE_TAG
+                            )
+                        }
                     }
                 }
             }
@@ -87,10 +78,10 @@ def call(Map config) {
                     curl -X POST http://spin-gate/api/v1/webhooks/ot \
                     -H 'Content-Type: application/json' \
                     -d '{
-                      "app": "${params.APP_NAME}",
-                      "image": "${params.APP_NAME}",
+                      "app": "${APP_NAME}",
+                      "image": "${APP_NAME}",
                       "tag": "${IMAGE_TAG}",
-                      "env": "${params.ENV}"
+                      "env": "${ENV}"
                     }'
                     """
                 }
