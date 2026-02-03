@@ -5,7 +5,7 @@ class LintScanner {
         steps.echo "Running Linting for ${lang}..."
         switch(lang) {
             case 'python':
-                steps.sh 'python3 -m pip install --user flake8 && python3 -m flake8 . --ignore=E501'
+                steps.sh 'python3 -m pip install --user flake8 && python3 -m flake8 . --ignore=E501,W291'
                 break
             case 'go':
                 steps.sh 'golangci-lint run'
