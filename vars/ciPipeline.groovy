@@ -8,9 +8,9 @@ def call(Map config = [:]) {
        Service → Directory Map
        ========================== */
     def serviceDirMap = [
-        attendance: 'attendance-api',
-        employee  : 'employee-api',
-        salary    : 'salary-api',
+        attendance: 'attendance',
+        employee  : 'employee',
+        salary    : 'salary',
         frontend  : 'frontend'
     ]
 
