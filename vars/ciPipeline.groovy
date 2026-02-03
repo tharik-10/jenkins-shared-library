@@ -1,4 +1,4 @@
-def call(Map config) {
+def call(Map config = [:]) {
 
     def serviceDirMap = [
         attendance: 'attendance-api',
@@ -28,11 +28,10 @@ def call(Map config) {
         }
 
         environment {
-            APP_NAME   = "${params.SERVICE}-api"
-            IMAGE_TAG = "${env.GIT_COMMIT}"
             SERVICE_DIR = "${serviceDirMap[params.SERVICE]}"
-            ECR_URL    = credentials('ecr-url')   // OR plain string if public
-            IMAGE_TAG = "${env.GIT_COMMIT}"
+            APP_NAME    = "${params.SERVICE}-api"
+            IMAGE_TAG   = "${env.GIT_COMMIT}"   // ✅ ONLY ONCE
+            ECR_URL     = "123456789012.dkr.ecr.ap-south-1.amazonaws.com"
         }
 
         stages {
