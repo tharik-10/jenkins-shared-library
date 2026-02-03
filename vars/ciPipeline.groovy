@@ -31,6 +31,8 @@ def call(Map config) {
             APP_NAME   = "${params.SERVICE}-api"
             IMAGE_TAG = "${env.GIT_COMMIT}"
             SERVICE_DIR = "${serviceDirMap[params.SERVICE]}"
+            ECR_URL    = credentials('ecr-url')   // OR plain string if public
+            IMAGE_TAG = "${env.GIT_COMMIT}"
         }
 
         stages {
