@@ -2,7 +2,7 @@ package builders
 
 class NodeBuilder {
     static void build() {
-        script.sh ''
+        script.sh '''
           npm install
           npm run build
         '''
