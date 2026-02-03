@@ -47,10 +47,10 @@ def call(Map config = [:]) {
                     script {
                         dir(env.SERVICE_DIR) {
 
-                            scanners.LintScanner.run(params.LANGUAGE)
+                            scanners.LintScanner.run(this, params.LANGUAGE)
 
                             if (!params.SKIP_TESTS) {
-                                scanners.TestRunner.run(params.LANGUAGE)
+                                scanners.TestRunner.run(this, params.LANGUAGE)
                             }
 
                             if (!params.SKIP_SCAN) {
