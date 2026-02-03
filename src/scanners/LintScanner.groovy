@@ -1,24 +1,31 @@
 package scanners
 
 class LintScanner {
-
-    static void run(def script, String language) {
-
-        switch(language) {
+    static void run(def steps, String lang) {
+        switch(lang) {
             case 'python':
-                script.sh 'pip install flake8 && flake8 .'
+                steps.sh '''
+                python3 --version
+                python3 -m ensurepip || true
+                python3 -m pip install --upgrade pip
+                python3 -m pip install flake8
+                python3 -m flake8 .
+                '''
                 break
 
             case 'go':
-                script.sh 'golangci-lint run'
+                steps.sh 'golangci-lint run'
                 break
 
             case 'java':
-                script.sh 'mvn checkstyle:check'
+                steps.sh 'mvn checkstyle:check'
                 break
 
             case 'node':
-                script.sh 'npm install && npm run lint'
+                steps.sh '''
+                npm ci
+                npm run lint
+                '''
                 break
         }
     }
