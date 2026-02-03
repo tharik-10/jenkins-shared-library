@@ -1,22 +1,25 @@
 package scanners
 
 class LintScanner {
-    static void run(String lang) {
-        switch(lang) {
+
+    static void run(def script, String language) {
+
+        switch(language) {
             case 'python':
-                sh 'pip install flake8 && flake8 .'
+                script.sh 'pip install flake8 && flake8 .'
                 break
+
             case 'go':
-                sh 'golangci-lint run'
+                script.sh 'golangci-lint run'
                 break
+
             case 'java':
-                sh 'mvn checkstyle:check'
+                script.sh 'mvn checkstyle:check'
                 break
+
             case 'node':
-                sh 'npm ci && npm run lint'
+                script.sh 'npm install && npm run lint'
                 break
-            default:
-                error "Unsupported language: ${lang}"
         }
     }
 }
