@@ -1,3 +1,7 @@
+import scanners.*
+import builders.*
+import docker.*
+    
 def call(Map config = [:]) {
 
     /* ==========================
