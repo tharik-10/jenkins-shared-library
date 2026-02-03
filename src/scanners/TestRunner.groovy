@@ -6,9 +6,11 @@ class TestRunner {
         switch(lang) {
             case 'python':
                 steps.sh '''
-                python3 -m pip install --user pytest
-                # Use . to search the entire service directory
-                python3 -m pytest . --import-mode=importlib
+                # Install all required dependencies for the app and tests
+                python3 -m pip install --user pytest flask mysql-connector-python PyYAML elastic-apm
+                
+                # Run pytest and accept exit code 5 (no tests found)
+                python3 -m pytest . --import-mode=importlib || [ $? -eq 5 ]
                 '''
                 break
             case 'go':
