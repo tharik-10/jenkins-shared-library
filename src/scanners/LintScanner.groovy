@@ -7,6 +7,8 @@ class LintScanner {
 
         def workspace = steps.pwd()
         def localBin = "${workspace}/bin"
+
+        // Go is installed OUTSIDE repo to avoid scanning pollution
         def globalGoDist = "${workspace}/../.global-go-dist"
 
         steps.sh "mkdir -p ${localBin}"
@@ -16,9 +18,7 @@ class LintScanner {
             /* ---------------- PYTHON ---------------- */
             case 'python':
                 steps.sh """
-                    #!/bin/bash
-                    set -euo pipefail
-
+                    /bin/bash -euo pipefail -c '
                     export PATH=\$PATH:\$HOME/.local/bin
 
                     # Install flake8 & bandit if missing
@@ -30,18 +30,17 @@ class LintScanner {
 
                     echo "🔹 Checking Python security..."
                     python3 -m bandit -r . -x ./venv,./env -ll || true
+                    '
                 """
                 break
 
             /* ---------------- GO ---------------- */
             case 'go':
                 steps.sh """
-                    #!/bin/bash
-                    set -euo pipefail
-
-                    # Install Go globally if missing
+                    /bin/bash -euo pipefail -c '
+                    # ---- Install Go (outside repo) ----
                     if [ ! -d "${globalGoDist}/go" ]; then
-                        echo "Installing Go..."
+                        echo "Installing Go globally..."
                         curl -LO https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
                         mkdir -p ${globalGoDist}
                         tar -C ${globalGoDist} -xzf go1.21.6.linux-amd64.tar.gz
@@ -51,54 +50,55 @@ class LintScanner {
                     export GOROOT=${globalGoDist}/go
                     export PATH=\$GOROOT/bin:${localBin}:\$PATH
 
+                    # ---- HARD ISOLATION ----
                     export GOPATH=\$PWD/.gopath
                     export GOMODCACHE=\$PWD/.gomodcache
                     mkdir -p \$GOPATH \$GOMODCACHE
 
-                    # Install golangci-lint if missing
+                    # ---- Install golangci-lint ----
                     if [ ! -f "${localBin}/golangci-lint" ]; then
                         curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
                           | sh -s -- -b ${localBin} v1.55.2
                     fi
 
-                    # Defensive cleanup
-                    rm -rf go-dist go-cache || true
+                    # ---- Defensive cleanup ----
+                    rm -rf go-dist go-cache
 
-                    echo "🔹 Running Go lint..."
+                    # ---- Validate module ----
                     go env
                     go mod tidy
-                    ${localBin}/golangci-lint run ./... --timeout=5m \
-                        --skip-dirs=go-dist,go-cache,.gopath,.gomodcache -v
+
+                    # ---- Run lint on ACTUAL code only ----
+                    ${localBin}/golangci-lint run ./... \
+                        --timeout=5m \
+                        --skip-dirs=go-dist,go-cache,.gopath,.gomodcache \
+                        -v
+                    '
                 """
                 break
 
             /* ---------------- JAVA ---------------- */
             case 'java':
                 steps.sh """
-                    #!/bin/bash
-                    set -euo pipefail
-
+                    /bin/bash -euo pipefail -c '
                     if [ -f "mvnw" ]; then
                         chmod +x mvnw
                         ./mvnw checkstyle:check
                     else
-                        command -v mvn >/dev/null 2>&1 || { echo "Maven not found!"; exit 1; }
+                        command -v mvn >/dev/null 2>&1 || { echo "Maven not found"; exit 1; }
                         mvn checkstyle:check
                     fi
+                    '
                 """
                 break
 
             /* ---------------- NODE ---------------- */
             case 'node':
                 steps.sh """
-                    #!/bin/bash
-                    set -euo pipefail
-
-                    # Install dependencies if missing
+                    /bin/bash -euo pipefail -c '
                     [ ! -d "node_modules" ] && npm install --quiet
-
-                    echo "🔹 Running Node lint..."
                     npm run lint || npx eslint . --fix-dry-run || echo "Lint skipped"
+                    '
                 """
                 break
 
@@ -107,3 +107,4 @@ class LintScanner {
         }
     }
 }
+
