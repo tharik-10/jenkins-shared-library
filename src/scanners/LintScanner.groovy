@@ -25,24 +25,34 @@ class LintScanner {
                         curl -LO https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
                         mkdir -p ./go-dist
                         tar -C ./go-dist -xzf go1.21.6.linux-amd64.tar.gz
-                        export PATH=\$PATH:\$(pwd)/go-dist/go/bin
                     fi
 
+                    # Explicitly set PATH to use the portable Go and the local bin
+                    export GOROOT=\$(pwd)/go-dist/go
+                    export PATH=\$GOROOT/bin:\$PATH:${localBin}
+                    
                     # 2. Setup Linter
                     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${localBin} v1.55.2
-                    export PATH=\$PATH:${localBin}
                     
-                    # 3. Initialize module if missing (prevents 'no go files' error)
+                    # Debugging: show what files are present
+                    echo "Current directory: \$(pwd)"
+                    ls -la
+
+                    # 3. Initialize module if missing (The Fix for 'no go files')
+                    # Go linter requires a module context to map files correctly
                     if [ ! -f "go.mod" ]; then
-                        go mod init temp-project && go mod tidy
+                        echo "Initializing temporary go module..."
+                        go mod init temp-project
+                        go mod tidy
                     fi
 
-                    ./bin/golangci-lint run --path-prefix . ./...
+                    # 4. Run Linter
+                    # Using ./ ensures it looks at the current folder even without subdirectories
+                    ${localBin}/golangci-lint run ./... --timeout=5m
                 """
                 break
                 
             case 'java':
-                // Check if Maven is installed, otherwise use the wrapper (standard in pro projects)
                 steps.sh """
                     if [ -f "mvnw" ]; then
                         echo "Using Maven Wrapper..."
