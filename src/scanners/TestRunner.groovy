@@ -6,15 +6,17 @@ class TestRunner {
         switch(lang) {
             case 'python':
                 steps.sh '''
-                # Check if requirements.txt exists and install dependencies
+                # Install/Upgrade dependencies
                 if [ -f requirements.txt ]; then
-                    python3 -m pip install --user -r requirements.txt
+                    python3 -m pip install --user --upgrade -r requirements.txt
                 fi
                 
-                # Install pytest explicitly just in case it's not in requirements.txt
                 python3 -m pip install --user pytest
                 
-                # Run pytest
+                # Point to the config.yaml located in the service directory
+                export CONFIG_FILE=./config.yaml
+                
+                # Run pytest (Exit code 5 means no tests found, which we allow)
                 python3 -m pytest . --import-mode=importlib || [ $? -eq 5 ]
                 '''
                 break
