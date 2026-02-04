@@ -94,10 +94,26 @@ class LintScanner {
 
             /* ---------------- NODE ---------------- */
             case 'node':
+                // Grab the Node tool path from Jenkins
+                // Ensure the 'name' matches exactly what you have in Global Tool Configuration
+                def nodeHome = steps.tool name: 'node', type: 'nodejs'
+                
                 steps.sh """
                     /bin/bash -euo pipefail -c '
-                    [ ! -d "node_modules" ] && npm install --quiet
-                    npm run lint || npx eslint . --fix-dry-run || echo "Lint skipped"
+                    # Add Node binaries to the PATH
+                    export PATH=${nodeHome}/bin:\$PATH
+                    
+                    echo "🔹 Using Node version: \$(node -v)"
+                    
+                    # Install dependencies if missing
+                    if [ ! -d "node_modules" ]; then
+                        echo "Installing dependencies..."
+                        npm install --quiet
+                    fi
+
+                    # Run linting
+                    echo "Running ESLint..."
+                    npm run lint || npx eslint . --ext .js,.ts --fix-dry-run || echo "Lint skipped"
                     '
                 """
                 break
