@@ -1,3 +1,5 @@
+package scanners
+
 class LintScanner {
 
     static void run(def steps, String lang) {
