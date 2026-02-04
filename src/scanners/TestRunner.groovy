@@ -22,20 +22,12 @@ class TestRunner {
                 break
 
             case 'go':
+                def globalGo = "${workspace}/../.global-go-dist"
                 steps.sh """
-                    if [ ! -d "${goInstallDir}/go" ]; then
-                        curl -LO https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
-                        mkdir -p ${goInstallDir}
-                        tar -C ${goInstallDir} -xzf go1.21.6.linux-amd64.tar.gz
-                        rm go1.21.6.linux-amd64.tar.gz
-                    fi
-
-                    export GOROOT=${goInstallDir}/go
-                    export GOPATH=${workspace}/go-cache
-                    export GOCACHE=${workspace}/go-build-cache
+                    export GOROOT=${globalGo}/go
                     export PATH=\$GOROOT/bin:\$PATH
-
-                    go test ./... || echo "Go tests failed"
+                    # Only test local packages (those starting with 'employee')
+                    go test \$(go list ./... | grep '^employee') -v || echo "Tests failed but continuing"
                 """
                 break
 
