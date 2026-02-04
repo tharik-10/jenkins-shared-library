@@ -7,19 +7,19 @@ class SecurityScanner {
         switch(lang) {
             case 'python':
                 steps.sh '''
-                # Install security tools and the upgrade manager
+                # Install tools
                 python3 -m pip install --user safety bandit pip-review
                 
-                # Automatically upgrade all dependencies to latest stable versions
-                echo "--- Upgrading Python Dependencies ---"
-                python3 -m pip_review --auto
+                echo "--- Attempting Dependency Upgrades ---"
+                # Use --continue-on-fail to ensure one bad package doesn't stop the CI
+                python3 -m pip_review --auto || echo "Some packages could not be upgraded automatically"
                 
-                # Run the scan (using '|| true' so we can see reports even if risks exist)
                 echo "--- Running Safety Scan ---"
-                python3 -m safety scan --output text || true
+                # Changed 'text' to 'screen' to fix the error in your logs
+                python3 -m safety scan --output screen || true
                 
-                echo "--- Running Bandit Static Analysis ---"
-                python3 -m bandit -r . -f txt || true
+                echo "--- Running Bandit ---"
+                python3 -m bandit -r . -f screen || true
                 '''
                 break
                 
