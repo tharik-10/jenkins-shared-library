@@ -6,10 +6,15 @@ class TestRunner {
         switch(lang) {
             case 'python':
                 steps.sh '''
-                # Install all required dependencies for the app and tests
-                python3 -m pip install --user pytest flask mysql-connector-python PyYAML elastic-apm
+                # Check if requirements.txt exists and install dependencies
+                if [ -f requirements.txt ]; then
+                    python3 -m pip install --user -r requirements.txt
+                fi
                 
-                # Run pytest and accept exit code 5 (no tests found)
+                # Install pytest explicitly just in case it's not in requirements.txt
+                python3 -m pip install --user pytest
+                
+                # Run pytest
                 python3 -m pytest . --import-mode=importlib || [ $? -eq 5 ]
                 '''
                 break
