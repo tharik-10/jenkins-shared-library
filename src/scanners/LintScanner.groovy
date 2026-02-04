@@ -1,5 +1,3 @@
-package scanners
-
 class LintScanner {
 
     static void run(def steps, String lang) {
@@ -7,8 +5,6 @@ class LintScanner {
 
         def workspace = steps.pwd()
         def localBin = "${workspace}/bin"
-
-        // Go is installed OUTSIDE repo to avoid scanning pollution
         def globalGoDist = "${workspace}/../.global-go-dist"
 
         steps.sh "mkdir -p ${localBin}"
@@ -26,10 +22,10 @@ class LintScanner {
                     command -v bandit >/dev/null 2>&1 || python3 -m pip install --user bandit
 
                     echo "🔹 Checking Python code style..."
-                    python3 -m flake8 . --ignore=E501,W291 --exclude=venv,env,.venv
+                    python3 -m flake8 . --ignore=E501,W291 --exclude=venv,env,.venv,__pycache__
 
                     echo "🔹 Checking Python security..."
-                    python3 -m bandit -r . -x ./venv,./env -ll || true
+                    python3 -m bandit -r . -x ./venv,./env,__pycache__ -ll || true
                     '
                 """
                 break
@@ -68,10 +64,11 @@ class LintScanner {
                     go env
                     go mod tidy
 
-                    # ---- Run lint on ACTUAL code only ----
+                    # ---- Run lint on actual code only ----
+                    # Exclude go/test, any go-cache, and vendor directories
                     ${localBin}/golangci-lint run ./... \
                         --timeout=5m \
-                        --skip-dirs=go-dist,go-cache,.gopath,.gomodcache \
+                        --skip-dirs=go-dist,go-cache,.gopath,.gomodcache,go/test,vendor \
                         -v
                     '
                 """
@@ -107,4 +104,3 @@ class LintScanner {
         }
     }
 }
-
