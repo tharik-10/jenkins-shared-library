@@ -45,7 +45,7 @@ class LintScanner {
                     export GOROOT=${globalGoDist}/go
                     export PATH=\$GOROOT/bin:${localBin}:\$PATH
 
-                    # ---- HARD ISOLATION (CRITICAL FIX) ----
+                    # ---- HARD ISOLATION ----
                     export GOPATH=\$PWD/.gopath
                     export GOMODCACHE=\$PWD/.gomodcache
                     mkdir -p \$GOPATH \$GOMODCACHE
@@ -63,9 +63,8 @@ class LintScanner {
                     go env
                     go mod tidy
 
-                    # ---- Run lint ONLY on real code ----
-                    ${localBin}/golangci-lint run \
-                        ./cmd/... ./internal/... ./pkg/... \
+                    # ---- Run lint on ACTUAL code only ----
+                    ${localBin}/golangci-lint run ./... \
                         --timeout=5m \
                         --skip-dirs=go-dist,go-cache,.gopath,.gomodcache \
                         -v
@@ -99,4 +98,3 @@ class LintScanner {
         }
     }
 }
-
