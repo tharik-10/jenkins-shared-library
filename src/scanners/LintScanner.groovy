@@ -4,9 +4,12 @@ class LintScanner {
     static void run(def steps, String lang) {
         steps.echo "Running Linting for ${lang}..."
         
-        // Define a local bin to keep the workspace clean and avoid permission issues
         def workspace = steps.pwd()
         def localBin = "${workspace}/bin"
+        // We move the go-dist one level up or to a hidden temp folder 
+        // to prevent 'go mod tidy' from seeing it as a submodule.
+        def goInstallDir = "${workspace}/.go-dist"
+        
         steps.sh "mkdir -p ${localBin}"
 
         switch(lang) {
@@ -20,33 +23,36 @@ class LintScanner {
                 
             case 'go':
                 steps.sh """
-                    # 1. Setup Portable Go Environment
-                    if ! command -v go &> /dev/null; then
+                    # 1. Setup Portable Go Environment (Hidden from module recursion)
+                    if [ ! -d "${goInstallDir}/go" ]; then
                         echo "Go not found, downloading portable version..."
                         curl -LO https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
-                        mkdir -p ./go-dist
-                        tar -C ./go-dist -xzf go1.21.6.linux-amd64.tar.gz
+                        mkdir -p ${goInstallDir}
+                        tar -C ${goInstallDir} -xzf go1.21.6.linux-amd64.tar.gz
+                        rm go1.21.6.linux-amd64.tar.gz
                     fi
 
-                    # 2. Define local Go Paths to avoid /var/lib/jenkins permission errors
-                    export GOROOT=${workspace}/go-dist/go
+                    # 2. Define local Go Paths
+                    export GOROOT=${goInstallDir}/go
                     export GOPATH=${workspace}/go-cache
-                    export GO111MODULE=on
                     export GOCACHE=${workspace}/go-build-cache
+                    export GO111MODULE=on
                     export PATH=\$GOROOT/bin:\$PATH:${localBin}
                     
                     # 3. Setup Linter
-                    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${localBin} v1.55.2
+                    if [ ! -f "${localBin}/golangci-lint" ]; then
+                        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${localBin} v1.55.2
+                    fi
                     
                     # 4. Prepare Go Module Context
-                    # Since go.mod exists, we tidy it to ensure dependencies are resolved
-                    echo "Tidying Go modules in ${workspace}..."
-                    go mod tidy
+                    # Now that GOROOT is in .go-dist, tidy will ignore it
+                    echo "Tidying Go modules..."
+                    go mod tidy || echo "Tidy encountered issues, but continuing..."
 
                     # 5. Run Linter
-                    # Using ./... with verbose output to track why files are analyzed
+                    # Explicitly skipping the cache and bin directories
                     echo "Executing golangci-lint..."
-                    ${localBin}/golangci-lint run ./... --timeout=5m -v
+                    ${localBin}/golangci-lint run ./... --timeout=5m --skip-dirs="go-cache,bin" -v
                 """
                 break
                 
@@ -67,13 +73,8 @@ class LintScanner {
             case 'node':
                 steps.sh """
                     if [ -f "package.json" ]; then
-                        # Set local npm cache to avoid permission issues
                         export npm_config_cache=${workspace}/.npm-cache
-                        
-                        # Install dependencies if node_modules missing
                         [ ! -d "node_modules" ] && npm install --quiet
-                        
-                        # Try running lint, fall back to npx eslint if no script exists
                         npm run lint || npx eslint . --ext .js,.ts --fix-dry-run || echo "No ESLint config found."
                     else
                         echo "No package.json found. Skipping Node linting."
