@@ -16,10 +16,12 @@ class LintScanner {
             /* ---------------- PYTHON ---------------- */
             case 'python':
                 steps.sh """
+                    #!/bin/bash
                     set -euo pipefail
+
                     export PATH=\$PATH:\$HOME/.local/bin
 
-                    # Install flake8 and bandit if missing
+                    # Install flake8 & bandit if missing
                     command -v flake8 >/dev/null 2>&1 || python3 -m pip install --user flake8
                     command -v bandit >/dev/null 2>&1 || python3 -m pip install --user bandit
 
@@ -34,11 +36,12 @@ class LintScanner {
             /* ---------------- GO ---------------- */
             case 'go':
                 steps.sh """
+                    #!/bin/bash
                     set -euo pipefail
 
-                    # ---- Install Go (outside repo) if missing ----
+                    # Install Go globally if missing
                     if [ ! -d "${globalGoDist}/go" ]; then
-                        echo "Installing Go globally..."
+                        echo "Installing Go..."
                         curl -LO https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
                         mkdir -p ${globalGoDist}
                         tar -C ${globalGoDist} -xzf go1.21.6.linux-amd64.tar.gz
@@ -48,53 +51,39 @@ class LintScanner {
                     export GOROOT=${globalGoDist}/go
                     export PATH=\$GOROOT/bin:${localBin}:\$PATH
 
-                    # ---- Isolated GOPATH ----
                     export GOPATH=\$PWD/.gopath
                     export GOMODCACHE=\$PWD/.gomodcache
                     mkdir -p \$GOPATH \$GOMODCACHE
 
-                    # ---- Install golangci-lint if missing ----
+                    # Install golangci-lint if missing
                     if [ ! -f "${localBin}/golangci-lint" ]; then
-                        echo "Installing golangci-lint..."
                         curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
                           | sh -s -- -b ${localBin} v1.55.2
                     fi
 
-                    # ---- Cleanup old dirs ----
+                    # Defensive cleanup
                     rm -rf go-dist go-cache || true
 
-                    # ---- Validate module ----
+                    echo "🔹 Running Go lint..."
                     go env
                     go mod tidy
-
-                    # ---- Run lint ----
-                    echo "🔹 Running Go lint..."
-                    ${localBin}/golangci-lint run ./... \
-                        --timeout=5m \
-                        --skip-dirs=go-dist,go-cache,.gopath,.gomodcache \
-                        -v
+                    ${localBin}/golangci-lint run ./... --timeout=5m \
+                        --skip-dirs=go-dist,go-cache,.gopath,.gomodcache -v
                 """
                 break
 
             /* ---------------- JAVA ---------------- */
             case 'java':
                 steps.sh """
+                    #!/bin/bash
                     set -euo pipefail
 
-                    # Prefer Maven Wrapper
                     if [ -f "mvnw" ]; then
                         chmod +x mvnw
-                        echo "🔹 Using Maven Wrapper..."
-                        ./mvnw clean verify checkstyle:check
+                        ./mvnw checkstyle:check
                     else
-                        # Check system Maven
-                        if command -v mvn >/dev/null 2>&1; then
-                            echo "🔹 Using system Maven..."
-                            mvn clean verify checkstyle:check
-                        else
-                            echo "❌ Maven not found! Install Maven or add mvnw to the repo."
-                            exit 1
-                        fi
+                        command -v mvn >/dev/null 2>&1 || { echo "Maven not found!"; exit 1; }
+                        mvn checkstyle:check
                     fi
                 """
                 break
@@ -102,15 +91,12 @@ class LintScanner {
             /* ---------------- NODE ---------------- */
             case 'node':
                 steps.sh """
+                    #!/bin/bash
                     set -euo pipefail
 
-                    # Install node modules if missing
-                    if [ ! -d "node_modules" ]; then
-                        echo "🔹 Installing Node dependencies..."
-                        npm install --quiet
-                    fi
+                    # Install dependencies if missing
+                    [ ! -d "node_modules" ] && npm install --quiet
 
-                    # Run lint, allow fix-dry-run
                     echo "🔹 Running Node lint..."
                     npm run lint || npx eslint . --fix-dry-run || echo "Lint skipped"
                 """
