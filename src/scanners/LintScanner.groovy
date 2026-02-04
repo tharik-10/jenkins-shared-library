@@ -62,7 +62,7 @@ class LintScanner {
                     fi
 
                     # ---- Defensive cleanup ----
-                    rm -rf go-dist go-cache
+                    rm -rf .gopath .gomodcache
 
                     # ---- Validate module ----
                     go env
