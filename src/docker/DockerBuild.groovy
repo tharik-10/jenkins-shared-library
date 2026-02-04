@@ -2,7 +2,7 @@ package docker
 
 class DockerBuild {
     static void buildAndPush(def steps, String ecrUrl, String appName, String tag) {
-        String region = "ap-south-1"
+        String region = "us-east-1"
         
         steps.echo "Checking if ECR repository ${appName} exists..."
         
