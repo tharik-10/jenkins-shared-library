@@ -24,7 +24,7 @@ def call(Map config = [:]) {
             // Even though we build one image, we might still want to trigger the pipeline 
             // based on a specific service change, or just select 'all'
             choice(name: 'ENV', choices: ['dev','qa','prod'], description: 'Target environment')
-            string(name: 'SPINNAKER_WEBHOOK', defaultValue: 'http://YOUR_ELB_URL:8084/webhooks/webhook/ot-microservices', description: 'Spinnaker Webhook URL')
+            string(name: 'SPINNAKER_WEBHOOK', defaultValue: 'http://aa40b02b7d7f94df48fec6c66beb9080-1633709375.us-east-1.elb.amazonaws.com:8084/webhooks/webhook/ot-microservices', description: 'Spinnaker Webhook URL')
             booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip unit tests')
             booleanParam(name: 'SKIP_SCAN', defaultValue: false, description: 'Skip security scans')
         }
