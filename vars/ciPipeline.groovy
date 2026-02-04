@@ -1,12 +1,8 @@
 import scanners.*
 import builders.*
 import docker.*
-    
-def call(Map config = [:]) {
 
-    /* ==========================
-       Service → Directory Map
-       ========================== */
+def call(Map config = [:]) {
     def serviceDirMap = [
         attendance: 'attendance',
         employee  : 'employee',
@@ -14,10 +10,6 @@ def call(Map config = [:]) {
         frontend  : 'frontend'
     ]
 
-    /* ==========================
-       Service → Language Map
-       (Avoids wrong selection)
-       ========================== */
     def serviceLangMap = [
         attendance: 'python',
         employee  : 'go',
@@ -29,26 +21,10 @@ def call(Map config = [:]) {
         agent any
 
         parameters {
-            choice(
-                name: 'SERVICE',
-                choices: serviceDirMap.keySet() as List,
-                description: 'Select microservice to build'
-            )
-            choice(
-                name: 'ENV',
-                choices: ['dev','qa','prod'],
-                description: 'Target environment'
-            )
-            booleanParam(
-                name: 'SKIP_TESTS',
-                defaultValue: false,
-                description: 'Skip unit tests'
-            )
-            booleanParam(
-                name: 'SKIP_SCAN',
-                defaultValue: false,
-                description: 'Skip security scans'
-            )
+            choice(name: 'SERVICE', choices: serviceDirMap.keySet() as List, description: 'Select microservice')
+            choice(name: 'ENV', choices: ['dev','qa','prod'], description: 'Target environment')
+            booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip unit tests')
+            booleanParam(name: 'SKIP_SCAN', defaultValue: false, description: 'Skip security scans')
         }
 
         environment {
@@ -60,78 +36,54 @@ def call(Map config = [:]) {
         }
 
         stages {
-
             stage('Checkout') {
-                steps {
-                    checkout scm
-                }
+                steps { checkout scm }
             }
 
             stage('CI Pipeline') {
                 steps {
                     script {
                         dir(env.SERVICE_DIR) {
-
-                            /* ---------- LINT ---------- */
                             scanners.LintScanner.run(this, env.LANGUAGE)
 
-                            /* ---------- TESTS ---------- */
                             if (!params.SKIP_TESTS) {
                                 scanners.TestRunner.run(this, env.LANGUAGE)
                             }
 
-                            /* ---------- SECURITY SCAN ---------- */
                             if (!params.SKIP_SCAN) {
-                               // Add 'env.LANGUAGE' here
-                               scanners.SecurityScanner.run(this, env.LANGUAGE) 
+                                scanners.SecurityScanner.run(this, env.LANGUAGE) 
                             }
 
-                            /* ---------- BUILD ---------- */
-                            builders."${env.LANGUAGE.capitalize()}Builder".build(this)
+                            /* --- FIXED BUILDER LOGIC --- */
+                            switch(env.LANGUAGE) {
+                                case 'python': new builders.PythonBuilder().build(this); break
+                                case 'go':     new builders.GoBuilder().build(this); break
+                                case 'java':   new builders.JavaBuilder().build(this); break
+                                case 'node':   new builders.NodeBuilder().build(this); break
+                                default: error "No builder for ${env.LANGUAGE}"
+                            }
 
-                            /* ---------- DOCKER BUILD & PUSH ---------- */
-                            docker.DockerBuild.buildAndPush(
-                                this,
-                                env.ECR_URL,
-                                env.APP_NAME,
-                                env.IMAGE_TAG
-                            )
-
-                            /* ---------- IMAGE SCAN ---------- */
-                            scanners.ImageScanner.scan(
-                                this,
-                                env.ECR_URL,
-                                env.APP_NAME,
-                                env.IMAGE_TAG
-                            )
+                            docker.DockerBuild.buildAndPush(this, env.ECR_URL, env.APP_NAME, env.IMAGE_TAG)
+                            scanners.ImageScanner.scan(this, env.ECR_URL, env.APP_NAME, env.IMAGE_TAG)
                         }
                     }
                 }
             }
-
+            
             stage('Trigger Spinnaker') {
                 steps {
                     sh """
                     curl -X POST http://spin-gate/api/v1/webhooks/ot \
                     -H 'Content-Type: application/json' \
-                    -d '{
-                      "app": "${APP_NAME}",
-                      "image": "${APP_NAME}",
-                      "tag": "${IMAGE_TAG}",
-                      "env": "${ENV}"
-                    }'
+                    -d '{"app": "${APP_NAME}", "image": "${APP_NAME}", "tag": "${IMAGE_TAG}", "env": "${params.ENV}"}'
                     """
                 }
             }
         }
 
         post {
-            success {
-                echo "✅ CI completed successfully for ${APP_NAME}"
-            }
-            failure {
-                echo "❌ CI failed for ${APP_NAME}"
-            }
+            success { echo "✅ CI completed successfully for ${APP_NAME}" }
+            failure { echo "❌ CI failed for ${APP_NAME}" }
         }
     }
 }
