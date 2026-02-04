@@ -29,7 +29,7 @@ class LintScanner {
                     # 3. Run Linter with updated PATH
                     export PATH=$PATH:$(pwd)/bin
                     go version # Verification
-                    ./bin/golangci-lint run
+                    ./bin/golangci-lint run ./...
                 '''
                 break
                 
