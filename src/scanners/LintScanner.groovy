@@ -37,7 +37,7 @@ class LintScanner {
                         go mod init temp-project && go mod tidy
                     fi
 
-                    ./bin/golangci-lint run ./...
+                    ./bin/golangci-lint run --path-prefix . ./...
                 """
                 break
                 
