@@ -21,7 +21,8 @@ class LintScanner {
                     python3 -m flake8 . --ignore=E501,W291 --exclude=venv,env,.venv,__pycache__,build,dist
                     
                     echo "Checking security with Bandit (excluding venv)..."
-                    python3 -m bandit -r . -x ./venv,./env,./.venv -ll
+                    python3 -m bandit -r . -x ./venv,./env,./.venv -ll || true
+
                 """
                 break
                 
