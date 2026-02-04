@@ -23,6 +23,8 @@ def call(Map config = [:]) {
         parameters {
             choice(name: 'SERVICE', choices: serviceDirMap.keySet() as List, description: 'Select microservice')
             choice(name: 'ENV', choices: ['dev','qa','prod'], description: 'Target environment')
+            // ADDED THE WEBHOOK PARAMETER HERE
+            string(name: 'SPINNAKER_WEBHOOK', defaultValue: 'http://spin-gate/api/v1/webhooks/ot', description: 'Spinnaker Webhook URL')
             booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip unit tests')
             booleanParam(name: 'SKIP_SCAN', defaultValue: false, description: 'Skip security scans')
         }
@@ -54,7 +56,6 @@ def call(Map config = [:]) {
                                 scanners.SecurityScanner.run(this, env.LANGUAGE) 
                             }
 
-                            /* --- FIXED BUILDER LOGIC --- */
                             switch(env.LANGUAGE) {
                                 case 'python': new builders.PythonBuilder().build(this); break
                                 case 'go':     new builders.GoBuilder().build(this); break
@@ -72,8 +73,9 @@ def call(Map config = [:]) {
             
             stage('Trigger Spinnaker') {
                 steps {
+                    // UPDATED TO USE params.SPINNAKER_WEBHOOK
                     sh """
-                    curl -X POST http://spin-gate/api/v1/webhooks/ot \
+                    curl -X POST ${params.SPINNAKER_WEBHOOK} \
                     -H 'Content-Type: application/json' \
                     -d '{"app": "${APP_NAME}", "image": "${APP_NAME}", "tag": "${IMAGE_TAG}", "env": "${params.ENV}"}'
                     """
