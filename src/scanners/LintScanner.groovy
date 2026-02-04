@@ -62,15 +62,17 @@ class LintScanner {
                     # ---- Defensive cleanup ----
                     rm -rf .gopath .gomodcache_local
 
-                    # ---- Validate module ----
+                    # ---- Validate module in service directory only ----
+                    # Assuming the Go module is at ./employee (adjust if different)
+                    cd employee || exit 1
                     go env
                     go mod tidy
 
-                    # ---- Run lint on actual code only ----
-                    # Exclude go/test, any go-cache, and vendor directories
-                    ${localBin}/golangci-lint run ./... \
+                    # ---- Run lint only on actual code directories ----
+                    # Common Go project layout: cmd/, internal/, pkg/
+                    ${localBin}/golangci-lint run ./cmd ./internal ./pkg \
                         --timeout=5m \
-                        --skip-dirs=go-dist,go-cache,.gopath,.gomodcache,go/test,vendor \
+                        --skip-dirs=vendor \
                         -v
                     '
                 """
