@@ -62,15 +62,22 @@ class LintScanner {
                     # ---- Defensive cleanup ----
                     rm -rf .gopath .gomodcache_local
 
-                    # ---- Validate module in service directory only ----
-                    # Assuming the Go module is at ./employee (adjust if different)
-                    cd employee || exit 1
+                    # ---- Validate module ----
                     go env
                     go mod tidy
 
-                    # ---- Run lint only on actual code directories ----
-                    # Common Go project layout: cmd/, internal/, pkg/
-                    ${localBin}/golangci-lint run ./cmd ./internal ./pkg \
+                    # ---- Detect code directories dynamically ----
+                    dirs=""
+                    for d in cmd internal pkg; do
+                        [ -d "\$d" ] && dirs="\$dirs \$d"
+                    done
+
+                    if [ -z "\$dirs" ]; then
+                        dirs="."  # fallback to current dir
+                    fi
+
+                    # ---- Run lint ----
+                    ${localBin}/golangci-lint run \$dirs \
                         --timeout=5m \
                         --skip-dirs=vendor \
                         -v
@@ -97,7 +104,10 @@ class LintScanner {
             case 'node':
                 steps.sh """
                     /bin/bash -euo pipefail -c '
+                    # Install node_modules if missing
                     [ ! -d "node_modules" ] && npm install --quiet
+
+                    # Run ESLint (skip if fails)
                     npm run lint || npx eslint . --fix-dry-run || echo "Lint skipped"
                     '
                 """
@@ -108,3 +118,4 @@ class LintScanner {
         }
     }
 }
+
