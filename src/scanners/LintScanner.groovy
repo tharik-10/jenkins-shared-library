@@ -12,15 +12,16 @@ class LintScanner {
                 break
                 
             case 'go':
-                // FIXED: Check if golangci-lint exists; if not, install it locally
                 steps.sh '''
-                    if ! command -v golangci-lint &> /dev/null
-                    then
-                        echo "golangci-lint not found, installing..."
-                        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
-                        export PATH=$PATH:$(go env GOPATH)/bin
-                    fi
-                    golangci-lint run
+                    # 1. Create a local bin folder in the workspace
+                    mkdir -p ./bin
+        
+                    # 2. Download and install to the local ./bin folder
+                    echo "Installing golangci-lint locally..."
+                    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin v1.55.2
+        
+                    # 3. Run it using the local path
+                    ./bin/golangci-lint run
                 '''
                 break
                 
