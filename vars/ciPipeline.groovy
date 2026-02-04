@@ -32,7 +32,7 @@ def call(Map config = [:]) {
             LANGUAGE    = "${serviceLangMap[params.SERVICE]}"
             APP_NAME    = "${params.SERVICE}-api"
             IMAGE_TAG   = "${env.GIT_COMMIT}"
-            ECR_URL     = "123456789012.dkr.ecr.ap-south-1.amazonaws.com"
+            ECR_URL     = "574621078554.dkr.ecr.us-east-1.amazonaws.com/ot-microservices"
         }
 
         stages {
