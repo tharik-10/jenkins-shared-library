@@ -31,6 +31,7 @@ class LintScanner {
                     # 2. Define local Go Paths to avoid /var/lib/jenkins permission errors
                     export GOROOT=${workspace}/go-dist/go
                     export GOPATH=${workspace}/go-cache
+                    export GO111MODULE=on
                     export GOCACHE=${workspace}/go-build-cache
                     export PATH=\$GOROOT/bin:\$PATH:${localBin}
                     
