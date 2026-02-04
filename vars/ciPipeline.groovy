@@ -82,7 +82,8 @@ def call(Map config = [:]) {
 
                             /* ---------- SECURITY SCAN ---------- */
                             if (!params.SKIP_SCAN) {
-                                scanners.SecurityScanner.run(this)
+                               // Add 'env.LANGUAGE' here
+                               scanners.SecurityScanner.run(this, env.LANGUAGE) 
                             }
 
                             /* ---------- BUILD ---------- */
