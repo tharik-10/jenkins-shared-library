@@ -62,7 +62,7 @@ class LintScanner {
                     fi
 
                     # ---- Defensive cleanup ----
-                    rm -rf go-dist go-cache
+                    sudo rm -rf go-dist go-cache
 
                     # ---- Validate module ----
                     go env
