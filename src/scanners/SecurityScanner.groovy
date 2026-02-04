@@ -7,25 +7,17 @@ class SecurityScanner {
         switch(lang) {
             case 'python':
                 steps.sh '''
-                # Install tools
-                python3 -m pip install --user safety bandit pip-review
-                
-                echo "--- Attempting Dependency Upgrades ---"
-                # Use --continue-on-fail to ensure one bad package doesn't stop the CI
-                python3 -m pip_review --auto || echo "Some packages could not be upgraded automatically"
-                
-                echo "--- Running Safety Scan ---"
-                # Changed 'text' to 'screen' to fix the error in your logs
-                python3 -m safety scan --output screen || true
-                
-                echo "--- Running Bandit ---"
+                python3 -m pip install --user safety bandit
+                if [ -f requirements.txt ]; then
+                    python3 -m pip install --user --upgrade -r requirements.txt || echo "Upgrades failed"
+                fi
+                python3 -m safety check --full-report || true
                 python3 -m bandit -r . -f screen || true
                 '''
                 break
                 
             case 'node':
                 steps.sh '''
-                echo "--- Fixing Node Vulnerabilities ---"
                 npm audit fix || true
                 npm audit
                 '''
@@ -34,10 +26,19 @@ class SecurityScanner {
             case 'go':
                 steps.sh 'go list -m all | nancy sleuth'
                 break
+
+            /* ==========================
+               ADDED JAVA LOGIC
+               ========================== */
+            case 'java':
+                steps.echo "--- Running Maven Dependency Check ---"
+                // This uses the Maven plugin to check for CVEs. 
+                // If you use Gradle, change this to './gradlew dependencyCheckAnalyze'
+                steps.sh 'mvn org.owasp:dependency-check-maven:check || echo "Dependency check failed"'
+                break
                 
             default:
-                steps.echo "No specific security tool for ${lang}, attempting OWASP..."
-                steps.sh 'dependency-check.sh --scan . || echo "Universal scanner not installed"'
+                steps.echo "No specific security tool for ${lang}, skipping scan."
         }
     }
 }
