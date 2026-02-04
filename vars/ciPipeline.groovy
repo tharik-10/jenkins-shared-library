@@ -24,7 +24,7 @@ def call(Map config = [:]) {
             choice(name: 'SERVICE', choices: serviceDirMap.keySet() as List, description: 'Select microservice')
             choice(name: 'ENV', choices: ['dev','qa','prod'], description: 'Target environment')
             // ADDED THE WEBHOOK PARAMETER HERE
-            string(name: 'SPINNAKER_WEBHOOK', defaultValue: 'http://abb741232a1614d6da3765409de0c5b0-634014634.us-east-1.elb.amazonaws.com/api/v1/webhooks/ot', description: 'Spinnaker Webhook URL')
+            string(name: 'SPINNAKER_WEBHOOK', defaultValue: 'http://aa40b02b7d7f94df48fec6c66beb9080-1633709375.us-east-1.elb.amazonaws.com:8084/webhooks/webhook/ot-microservices', description: 'Spinnaker Webhook URL')
             booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip unit tests')
             booleanParam(name: 'SKIP_SCAN', defaultValue: false, description: 'Skip security scans')
         }
