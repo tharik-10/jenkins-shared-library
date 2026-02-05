@@ -45,11 +45,19 @@ class SecurityScanner {
                 break
 
             case 'java':
+                // FIX: Grab the 'maven-3' tool path from Jenkins
+                def mvnHome = steps.tool name: 'maven-3', type: 'maven'
+                
                 steps.sh """
+                    # Inject Maven into the PATH
+                    export PATH=${mvnHome}/bin:\$PATH
+                    
                     if [ -f "mvnw" ]; then
-                        ./mvnw org.owasp:dependency-check-maven:check || echo "Dependency check failed"
+                        chmod +x mvnw
+                        ./mvnw org.owasp:dependency-check-maven:check || echo "Dependency check warnings found"
                     else
-                        mvn org.owasp:dependency-check-maven:check || echo "Maven not found, skipping OWASP scan"
+                        # Now 'mvn' will be found because of the export PATH above
+                        mvn org.owasp:dependency-check-maven:check || echo "OWASP scan failed or vulnerabilities found"
                     fi
                 """
                 break
