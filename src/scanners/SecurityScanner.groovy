@@ -45,19 +45,20 @@ class SecurityScanner {
                 break
 
             case 'java':
-                // FIX: Grab the 'maven-3' tool path from Jenkins
                 def mvnHome = steps.tool name: 'maven-3', type: 'maven'
                 
                 steps.sh """
-                    # Inject Maven into the PATH
                     export PATH=${mvnHome}/bin:\$PATH
                     
+                    echo "🧹 Clearing corrupted OWASP database..."
+                    mvn org.owasp:dependency-check-maven:purge || echo "Purge failed, continuing..."
+
                     if [ -f "mvnw" ]; then
                         chmod +x mvnw
-                        ./mvnw org.owasp:dependency-check-maven:check || echo "Dependency check warnings found"
+                        # Added -DautoUpdate=true to ensure it attempts a fresh sync
+                        ./mvnw org.owasp:dependency-check-maven:check -DautoUpdate=true || echo "Vulnerabilities found"
                     else
-                        # Now 'mvn' will be found because of the export PATH above
-                        mvn org.owasp:dependency-check-maven:check || echo "OWASP scan failed or vulnerabilities found"
+                        mvn org.owasp:dependency-check-maven:check -DautoUpdate=true || echo "Vulnerabilities found"
                     fi
                 """
                 break
