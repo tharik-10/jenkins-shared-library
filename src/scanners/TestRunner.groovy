@@ -16,11 +16,8 @@ class TestRunner {
                     export GOROOT=${globalGo}/go
                     export PATH=\$GOROOT/bin:\$PATH
                     
-                    # 1. Create the employee directory structure
+                    # Create the directory and file
                     mkdir -p employee
-
-                    # 2. Write your specific config content into the file
-                    # This ensures the Go app finds the exact settings it needs
                     cat <<EOF > employee/config.yaml
 elasticsearch:
   enabled: true
@@ -31,11 +28,9 @@ elasticsearch:
 employee:
   api_port: "8083"
 EOF
-
-                    # 3. Also place a copy in the root, just in case
-                    cp employee/config.yaml config.yaml
-
-                    # 4. Run tests
+                    # FIX: Set the environment variable that Go likely expects
+                    export CONFIG_PATH=\$(pwd)/employee/config.yaml
+                    
                     go test \$(go list ./... | grep '^employee') -v || echo "Tests failed but continuing"
                 """
                 break
