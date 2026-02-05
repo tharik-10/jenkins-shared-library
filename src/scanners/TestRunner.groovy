@@ -47,6 +47,7 @@ class TestRunner {
                 break
 
             case 'node':
+                def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
                 steps.sh """
                     if [ -f package.json ]; then
                         npm test || echo "Node tests failed"
