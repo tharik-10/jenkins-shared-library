@@ -35,7 +35,7 @@ class DockerBuild {
 
             # 3. Tag and Push the image created by the Makefile
             # Note: Ensure 'ot-microservices' matches the image name in your Makefile
-            docker tag ot-microservices:latest ${fullImageName}
+            docker tag ${localImageName}:latest ${fullImageName}
             docker push ${fullImageName}
             
             echo "✅ Successfully pushed ${fullImageName}"
