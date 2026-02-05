@@ -21,10 +21,11 @@ class SecurityScanner {
                 
             case 'node':
                 def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
-                steps.sh '''
-                    npm audit fix || true
-                    npm audit || true
-                '''
+    steps.sh """
+        export PATH=${nodeHome}/bin:\$PATH
+        npm audit fix --force || true
+        npm audit || true
+    """
                 break
                 
             case 'go':
