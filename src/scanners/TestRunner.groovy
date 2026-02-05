@@ -48,11 +48,12 @@ class TestRunner {
 
             case 'node':
                 def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
-                steps.sh """
-                    if [ -f package.json ]; then
-                        npm test || echo "Node tests failed"
-                    fi
-                """
+    steps.sh """
+        export PATH=${nodeHome}/bin:\$PATH
+        if [ -f "package.json" ]; then
+            npm test || echo "Node tests failed"
+        fi
+    """
                 break
 
             default:
