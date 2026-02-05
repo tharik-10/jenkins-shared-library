@@ -10,48 +10,52 @@ class TestRunner {
         steps.sh "mkdir -p ${localBin}"
 
         switch(lang) {
-            case 'python':
-                steps.sh """
-                    export PATH=\$PATH:\$HOME/.local/bin
-                    python3 -m pip install --user pytest
-                    # Exclude venv from test discovery
-                    pytest --ignore=venv || echo "Python tests failed"
-                """
-                break
-
             case 'go':
                 def globalGo = "${workspace}/../.global-go-dist"
                 steps.sh """
                     export GOROOT=${globalGo}/go
                     export PATH=\$GOROOT/bin:\$PATH
                     
-                    # FIX: Create a dummy config if the app expects one to initialize
-                    if [ ! -f "config.yaml" ]; then
-                        echo "Creating dummy config.yaml for tests..."
-                        echo "database: elasticsearch" > config.yaml
-                    fi
+                    # 1. Create the employee directory structure
+                    mkdir -p employee
 
-                    # Only test local packages
+                    # 2. Write your specific config content into the file
+                    # This ensures the Go app finds the exact settings it needs
+                    cat <<EOF > employee/config.yaml
+elasticsearch:
+  enabled: true
+  host: http://empms-es:9200
+  username: elastic
+  password: elastic
+
+employee:
+  api_port: "8083"
+EOF
+
+                    # 3. Also place a copy in the root, just in case
+                    cp employee/config.yaml config.yaml
+
+                    # 4. Run tests
                     go test \$(go list ./... | grep '^employee') -v || echo "Tests failed but continuing"
+                """
+                break
+
+            case 'python':
+                steps.sh """
+                    export PATH=\$PATH:\$HOME/.local/bin
+                    python3 -m pip install --user pytest
+                    pytest --ignore=venv || echo "Python tests failed"
                 """
                 break
 
             case 'java':
                 def mvnHome = steps.tool name: 'maven-3', type: 'maven'
-                steps.sh """
-                    export PATH=${mvnHome}/bin:\$PATH
-                    mvn test -DfailIfNoTests=false
-                """
+                steps.sh "export PATH=${mvnHome}/bin:\$PATH && mvn test -DfailIfNoTests=false"
                 break
 
             case 'node':
                 def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
-                steps.sh """
-                    export PATH=${nodeHome}/bin:\$PATH
-                    if [ -f "package.json" ]; then
-                        npm test || echo "Node tests failed"
-                    fi
-                """
+                steps.sh "export PATH=${nodeHome}/bin:\$PATH && npm test || true"
                 break
 
             default:
