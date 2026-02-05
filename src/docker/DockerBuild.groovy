@@ -17,27 +17,32 @@ class DockerBuild {
         steps.echo "🚀 Starting Monolith Build via Docker Compose..."
         
         steps.sh """
-            # Check if docker-compose is installed, if not, try to use 'docker compose' (V2)
-            if command -v docker-compose >/dev/null 2>&1; then
-                DOCKER_COMPOSE_CMD="docker-compose"
-            else
-                DOCKER_COMPOSE_CMD="docker compose"
+            # Create a local bin directory to house our 'fake' docker-compose binary
+            mkdir -p dev_bin
+            
+            if ! command -v docker-compose >/dev/null 2>&1; then
+                echo "Creating docker-compose wrapper for Docker V2..."
+                echo '#!/bin/bash' > dev_bin/docker-compose
+                echo 'docker compose "\$@"' >> dev_bin/docker-compose
+                chmod +x dev_bin/docker-compose
             fi
 
-            echo "Using command: \$DOCKER_COMPOSE_CMD"
+            # Add our local dev_bin to the front of the PATH
+            export PATH=\$PWD/dev_bin:\$PATH
 
-            # Build images using the Makefile (which calls compose)
-            # If your Makefile is hardcoded to 'docker-compose', we alias it:
-            alias docker-compose='docker compose' 2>/dev/null || true
-            
+            echo "Building monolith image using Makefile..."
+            # Now when 'make' calls 'docker-compose', it finds our wrapper script
             make build-images
 
             # 3. Tag and Push
-            # Assuming the Makefile produces an image named 'ot-microservices:latest'
+            echo "Tagging and Pushing image..."
             docker tag ot-microservices:latest ${fullImageName}
             docker push ${fullImageName}
             
             echo "✅ Successfully pushed ${fullImageName}"
+            
+            # Cleanup wrapper
+            rm -rf dev_bin
         """
     }
 }
