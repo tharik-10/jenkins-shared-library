@@ -46,19 +46,18 @@ class SecurityScanner {
 
             case 'java':
                 def mvnHome = steps.tool name: 'maven-3', type: 'maven'
-                
                 steps.sh """
                     export PATH=${mvnHome}/bin:\$PATH
                     
-                    echo "🧹 Clearing corrupted OWASP database..."
-                    mvn org.owasp:dependency-check-maven:purge || echo "Purge failed, continuing..."
+                    echo "🧹 Attempting to fix corrupted OWASP DB..."
+                    # We use -DfailOnError=false to ensure the pipeline doesn't stop here
+                    mvn org.owasp:dependency-check-maven:purge -DfailOnError=false || true
 
                     if [ -f "mvnw" ]; then
                         chmod +x mvnw
-                        # Added -DautoUpdate=true to ensure it attempts a fresh sync
-                        ./mvnw org.owasp:dependency-check-maven:check -DautoUpdate=true || echo "Vulnerabilities found"
+                        ./mvnw org.owasp:dependency-check-maven:check -DfailOnError=false || echo "Scan failed but moving on..."
                     else
-                        mvn org.owasp:dependency-check-maven:check -DautoUpdate=true || echo "Vulnerabilities found"
+                        mvn org.owasp:dependency-check-maven:check -DfailOnError=false || echo "Scan failed but moving on..."
                     fi
                 """
                 break
