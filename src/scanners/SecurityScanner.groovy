@@ -23,11 +23,13 @@ class SecurityScanner {
                 
             case 'node':
                 def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
-                steps.sh """
-                    export PATH=${nodeHome}/bin:\$PATH
-                    npm audit fix --force || true
-                    npm audit || true
-                """
+    steps.sh """
+        export PATH=${nodeHome}/bin:\$PATH
+        # 1. Try a standard fix first (safe)
+        npm audit fix || true
+        # 2. Only show the audit summary to keep logs readable
+        npm audit --audit-level=high || true 
+    """
                 break
                 
             case 'go':
