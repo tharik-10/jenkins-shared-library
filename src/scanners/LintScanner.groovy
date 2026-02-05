@@ -82,28 +82,18 @@ class LintScanner {
 
             /* ---------------- NODE ---------------- */
             case 'node':
-                // Grab the Node tool path from Jenkins
-                // Ensure the 'name' matches exactly what you have in Global Tool Configuration
                 def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
-                
-                steps.sh """
-                    /bin/bash -euo pipefail -c '
-                    # Add Node binaries to the PATH
-                    export PATH=${nodeHome}/bin:\$PATH
-                    
-                    echo "🔹 Using Node version: \$(node -v)"
-                    
-                    # Install dependencies if missing
-                    if [ ! -d "node_modules" ]; then
-                        echo "Installing dependencies..."
-                        npm install --quiet
-                    fi
-
-                    # Run linting
-                    echo "Running ESLint..."
-                    npm run lint || npx eslint . --ext .js,.ts --fix-dry-run || echo "Lint skipped"
-                    '
-                """
+    steps.sh """
+        export PATH=${nodeHome}/bin:\$PATH
+        # Check if lint script exists in package.json, otherwise use npx or skip
+        if npm run | grep -q 'lint'; then
+            npm run lint
+        elif [ -f ".eslintrc" ] || [ -f ".eslintrc.json" ]; then
+            npx eslint . --fix-dry-run
+        else
+            echo "No lint configuration found, skipping linting."
+        fi
+    """
                 break
 
             default:
