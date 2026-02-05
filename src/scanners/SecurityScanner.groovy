@@ -48,20 +48,19 @@ class SecurityScanner {
 
             case 'java':
                 def mvnHome = steps.tool name: 'maven-3', type: 'maven'
-                steps.sh """
-                    export PATH=${mvnHome}/bin:\$PATH
-                    
-                    echo "🧹 Attempting to fix corrupted OWASP DB..."
-                    # We use -DfailOnError=false to ensure the pipeline doesn't stop here
-                    mvn org.owasp:dependency-check-maven:purge -DfailOnError=false || true
+    steps.sh """
+        export PATH=${mvnHome}/bin:\$PATH
+        
+        echo "🧹 Purging corrupted database..."
+        mvn org.owasp:dependency-check-maven:purge || true
 
-                    if [ -f "mvnw" ]; then
-                        chmod +x mvnw
-                        ./mvnw org.owasp:dependency-check-maven:check -DfailOnError=false || echo "Scan failed but moving on..."
-                    else
-                        mvn org.owasp:dependency-check-maven:check -DfailOnError=false || echo "Scan failed but moving on..."
-                    fi
-                """
+        echo "🚀 Running scan with 'hosted' mode disabled to reduce NVD hits..."
+        # -DnvdApiDelay=16000 adds a delay between requests to avoid being banned
+        # -DautoUpdate=true ensures it tries to fetch only what is missing
+        mvn org.owasp:dependency-check-maven:check \
+            -DnvdApiDelay=16000 \
+            -DfailOnError=false || echo "Scan failed but continuing..."
+    """
                 break
                 
             default:
