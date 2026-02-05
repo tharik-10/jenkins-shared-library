@@ -84,7 +84,7 @@ class LintScanner {
             case 'node':
                 // Grab the Node tool path from Jenkins
                 // Ensure the 'name' matches exactly what you have in Global Tool Configuration
-                def nodeHome = steps.tool name: 'node', type: 'nodejs'
+                def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
                 
                 steps.sh """
                     /bin/bash -euo pipefail -c '
