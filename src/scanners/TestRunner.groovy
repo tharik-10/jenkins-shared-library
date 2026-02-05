@@ -32,12 +32,16 @@ class TestRunner {
                 break
 
             case 'java':
+                // This looks up the installation path of your 'maven-3' tool
+                def mvnHome = steps.tool name: 'maven-3', type: 'maven'
                 steps.sh """
-                    if [ -f mvnw ]; then
+                    # Explicitly add the bin folder to the PATH for this shell session
+                    export PATH=${mvnHome}/bin:\$PATH
+                    if [ -f "mvnw" ]; then
                         chmod +x mvnw
-                        ./mvnw test || echo "Java tests failed"
+                        ./mvnw test
                     else
-                        mvn test || echo "Maven not found"
+                        mvn test
                     fi
                 """
                 break
