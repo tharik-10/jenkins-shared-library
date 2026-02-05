@@ -20,6 +20,7 @@ class SecurityScanner {
                 break
                 
             case 'node':
+                def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
                 steps.sh '''
                     npm audit fix || true
                     npm audit || true
