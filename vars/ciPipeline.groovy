@@ -77,15 +77,15 @@ def call(Map config = [:]) {
             stage('Trigger Spinnaker') {
                 steps {
                     sh """
-                    curl -X POST ${params.SPINNAKER_WEBHOOK} \
-                    -H 'Content-Type: application/json' \
-                    -d '{
-                        "app": "ot-microservices", 
-                        "image": "${env.MONO_REPO_NAME}", 
-                        "tag": "${env.IMAGE_TAG}", 
-                        "env": "${params.ENV}"
-                    }'
-                    """
+        curl -X POST ${params.SPINNAKER_WEBHOOK} \
+        -H 'Content-Type: application/json' \
+        -d '{
+            "app": "ot-microservices", 
+            "image": "${env.ECR_URL}/${env.MONO_REPO_NAME}", 
+            "tag": "${env.IMAGE_TAG}", 
+            "env": "${params.ENV}"
+        }'
+        """
                 }
             }
         }
