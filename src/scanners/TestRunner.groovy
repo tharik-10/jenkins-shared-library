@@ -60,7 +60,8 @@ class TestRunner {
                         npm test -- --watchAll=false --passWithNoTests || echo "Node tests failed"
                     fi
                 """
-
+                break
+            
             default:
                 steps.echo "No tests defined for ${lang}"
         }
