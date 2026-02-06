@@ -80,6 +80,7 @@ def call(Map config = [:]) {
         curl -X POST ${params.SPINNAKER_WEBHOOK} \
         -H 'Content-Type: application/json' \
         -d '{
+            "type": "docker/image",
             "app": "ot-microservices", 
             "image": "${env.ECR_URL}/${env.MONO_REPO_NAME}", 
             "tag": "${env.IMAGE_TAG}", 
