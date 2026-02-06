@@ -16,22 +16,18 @@ class TestRunner {
                     export GOROOT=${globalGo}/go
                     export PATH=\$GOROOT/bin:\$PATH
                     
-                    # Create the directory and file
-                    mkdir -p employee
-                    cat <<EOF > employee/config.yaml
-elasticsearch:
-  enabled: true
-  host: http://empms-es:9200
-  username: elastic
-  password: elastic
-
-employee:
-  api_port: "8083"
-EOF
-                    # FIX: Set the environment variable that Go likely expects
-                    export CONFIG_PATH=\$(pwd)/employee/config.yaml
+                    # 1. Check if config.yaml exists in the repo
+                    if [ -f "config.yaml" ]; then
+                        echo "✅ Using config.yaml from repository"
+                        export CONFIG_PATH=\$(pwd)/config.yaml
+                    else
+                        echo "⚠️ config.yaml not found in employee directory!"
+                        # Optional: Fallback to a template or fail
+                        exit 1
+                    fi
                     
-                    go test \$(go list ./... | grep '^employee') -v || echo "Tests failed but continuing"
+                    # 2. Run tests
+                    go test ./... -v || echo "Tests failed but continuing"
                 """
                 break
 
