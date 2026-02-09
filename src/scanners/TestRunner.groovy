@@ -10,26 +10,18 @@ class TestRunner {
         steps.sh "mkdir -p ${localBin}"
 
         switch(lang) {
-            case 'go':
-                def globalGoDist = "${workspace}/../.global-go-dist"
-    steps.sh """
-        # 1. Setup Environment
-        export GOROOT=${globalGoDist}/go
-        export PATH=\$GOROOT/bin:\$PATH
-        
-        # 2. Fix Config Path (The "open: no such file" fix)
-        # Ensure the file exists in the current directory for the test
-        if [ -f "config.yaml" ]; then
-            export CONFIG_PATH=\$(pwd)/config.yaml
-            echo "✅ CONFIG_PATH set to \$CONFIG_PATH"
-        else
-            echo "❌ ERROR: config.yaml not found in \$(pwd)"
-            exit 1
-        fi
+            # Set Go environment
+    export GOROOT=${workspace}/../.global-go-dist/go
+    export PATH=\$GOROOT/bin:\$PATH
+    
+    # FIX: Point to the absolute path of the config file in the current service directory
+    if [ -f "config.yaml" ]; then
+        export CONFIG_PATH=\$(pwd)/config.yaml
+        echo "✅ Found config: \$CONFIG_PATH"
+    fi
 
-        # 3. Run Tests
-        go test ./... -v
-    """
+    go test ./... -v
+"""
                 break
 
             case 'python':
