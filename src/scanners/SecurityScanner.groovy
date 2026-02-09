@@ -45,17 +45,18 @@ class SecurityScanner {
                 break
                 
             case 'go':
+                def globalGoDist = "${workspace}/../.global-go-dist"
                 steps.sh """
-                    if ! command -v go &> /dev/null; then
-                        export PATH=\$PATH:${workspace}/go/bin
-                    fi
+                    # Set Go paths so Nancy can run 'go list'
+                    export GOROOT=${globalGoDist}/go
+                    export PATH=\$GOROOT/bin:${localBin}:\$PATH
                     
                     if ! command -v nancy &> /dev/null; then
                         curl -sfL https://github.com/sonatype-nexus-community/nancy/releases/download/v1.0.42/nancy-v1.0.42-linux-amd64.tar.gz | tar -C ${localBin} -xz nancy
                     fi
                     
-                    # Run nancy and suppress error if rate-limited (401)
-                    go list -m all | ${localBin}/nancy sleuth || echo "Nancy scan failed or rate-limited"
+                    # Run nancy
+                    go list -m all | ${localBin}/nancy sleuth || echo "Nancy scan failed"
                 """
                 break
 
