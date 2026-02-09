@@ -10,22 +10,25 @@ class SecurityScanner {
         switch(lang) {
             case 'python':
                 steps.sh """
+                    # 1. Install system-level dependencies required for building Python C-extensions
+                    # This fixes the 'cairo not found' and 'PyGObject' build errors
+                    sudo apt-get update && sudo apt-get install -y \
+                        pkg-config \
+                        libcairo2-dev \
+                        libglib2.0-dev \
+                        libgirepository1.0-dev
+
                     export PATH=\$PATH:\$HOME/.local/bin
                     python3 -m pip install --user --upgrade pip setuptools wheel
                     
                     echo "--- Automatically Upgrading All Outdated Packages ---"
-                    # Install pip-review to handle the bulk upgrade
                     python3 -m pip install --user pip-review
-                    
-                    # This command finds ALL outdated packages and upgrades them automatically
                     python3 -m pip_review --local --auto
                     
                     echo "--- Running Security Scan ---"
                     python3 -m pip install --user safety bandit
                     
-                    # Now safety check should pass because packages are updated
                     python3 -m safety check --full-report || true
-                    
                     python3 -m bandit -r . -x ./venv -f screen || true
                 """
                 break
