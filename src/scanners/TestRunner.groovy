@@ -10,21 +10,27 @@ class TestRunner implements Serializable {
         switch(lang) {
             case 'go':
                 def globalGoDist = "${workspace}/../.global-go-dist"
-    steps.sh """
-        export GOROOT=${globalGoDist}/go
-        export PATH=\$GOROOT/bin:\$PATH
-        
-        # FIX: Copy config into the specific folder where the test file resides
-        if [ -f "config.yaml" ]; then
-            # Copy it to the current directory AND the subdirectory if needed
-            cp config.yaml employee/config.yaml || true
-            export CONFIG_PATH=\$(pwd)/config.yaml
-            echo "✅ Config synced to folder: employee/config.yaml"
-        fi
-
-        # Run tests from the service root
-        go test ./... -v
-    """
+                steps.sh """
+                    # 1. Setup Go Path
+                    export GOROOT=${globalGoDist}/go
+                    export PATH=\$GOROOT/bin:\$PATH
+                    
+                    # 2. Sync Config File
+                    # We copy it to the root and the employee folder just to be safe
+                    cp config.yaml employee/config.yaml || true
+                    
+                    # 3. Define the Absolute Path
+                    # Use a shell variable to ensure it's not empty
+                    ABS_CONFIG=\$(pwd)/config.yaml
+                    
+                    echo "--- Debugging Go Test Environment ---"
+                    echo "Current Directory: \$(pwd)"
+                    echo "Looking for config at: \$ABS_CONFIG"
+                    
+                    # 4. Run Test with DIRECT variable injection
+                    # This ensures the Go process sees the variable immediately
+                    CONFIG_PATH=\$ABS_CONFIG go test ./employee/... -v
+                """
                 break
 
             case 'python':
