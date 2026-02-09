@@ -34,10 +34,22 @@ class TestRunner {
 
             case 'python':
                 steps.sh """
-                    export PATH=\$PATH:\$HOME/.local/bin
-                    python3 -m pip install --user pytest
-                    pytest --ignore=venv || echo "Python tests failed"
-                """
+        # 1. Install System Headers (The "cairo/PyGObject" fix)
+        # These are required to compile the packages listed in your error logs
+        sudo apt-get update
+        sudo apt-get install -y pkg-config libcairo2-dev libglib2.0-dev libgirepository1.0-dev
+
+        # 2. Setup Python environment
+        python3 -m venv venv
+        . venv/bin/activate
+        
+        # 3. Install dependencies
+        pip install --upgrade pip setuptools wheel
+        pip install -r requirements.txt
+        
+        # 4. Run tests (using pytest or nosetests)
+        pytest --verbose || echo "Tests failed but continuing"
+    """
                 break
 
             case 'java':
