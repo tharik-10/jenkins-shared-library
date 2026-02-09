@@ -10,24 +10,26 @@ class TestRunner implements Serializable {
         switch(lang) {
             case 'go':
                 def globalGoDist = "${workspace}/../.global-go-dist"
-                steps.sh """
-                    # 1. Setup Go Path
-                    export GOROOT=${globalGoDist}/go
-                    export PATH=\$GOROOT/bin:\$PATH
-                    
-                    # 2. Set the config path to the current directory
-                    # Since we are already inside the 'employee' folder,
-                    # config.yaml is right here.
-                    export CONFIG_PATH=\$(pwd)/config.yaml
-                    
-                    echo "--- Debugging Go Test Environment ---"
-                    echo "Current Directory: \$(pwd)"
-                    ls -lh config.yaml || echo "❌ config.yaml NOT FOUND in \$(pwd)"
-                    
-                    # 3. Run tests using '.' 
-                    # We use './...' to test everything in the CURRENT directory
-                    CONFIG_PATH=\$CONFIG_PATH go test ./... -v
-                """
+    steps.sh """
+        export GOROOT=${globalGoDist}/go
+        export PATH=\$GOROOT/bin:\$PATH
+        
+        # 1. Set the variable we THINK it wants
+        export CONFIG_PATH=\$(pwd)/config.yaml
+        
+        # 2. Some Go projects expect 'CONF_PATH' or 'CONFIG' 
+        # Let's set the most common ones just in case
+        export CONF_PATH=\$CONFIG_PATH
+        export CONFIG=\$CONFIG_PATH
+        
+        echo "--- Debugging Employee Service ---"
+        echo "Current Dir: \$(pwd)"
+        ls -la config.yaml
+        
+        # 3. Use 'env' to inject the variable directly into the test execution
+        # We also run from the current directory
+        env CONFIG_PATH=\$CONFIG_PATH CONF_PATH=\$CONFIG_PATH go test ./... -v
+    """
                 break
 
             case 'python':
