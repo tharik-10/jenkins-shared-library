@@ -10,19 +10,21 @@ class TestRunner implements Serializable {
         switch(lang) {
             case 'go':
                 def globalGoDist = "${workspace}/../.global-go-dist"
-                steps.sh """
-                    # Set Go environment
-                    export GOROOT=${globalGoDist}/go
-                    export PATH=\$GOROOT/bin:\$PATH
-                    
-                    # FIX: Ensure config path is absolute
-                    if [ -f "config.yaml" ]; then
-                        export CONFIG_PATH=\$(pwd)/config.yaml
-                        echo "✅ Found config: \$CONFIG_PATH"
-                    fi
+    steps.sh """
+        export GOROOT=${globalGoDist}/go
+        export PATH=\$GOROOT/bin:\$PATH
+        
+        # FIX: Copy config into the specific folder where the test file resides
+        if [ -f "config.yaml" ]; then
+            # Copy it to the current directory AND the subdirectory if needed
+            cp config.yaml employee/config.yaml || true
+            export CONFIG_PATH=\$(pwd)/config.yaml
+            echo "✅ Config synced to folder: employee/config.yaml"
+        fi
 
-                    go test ./... -v
-                """
+        # Run tests from the service root
+        go test ./... -v
+    """
                 break
 
             case 'python':
