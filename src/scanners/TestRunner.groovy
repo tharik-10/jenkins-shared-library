@@ -15,21 +15,18 @@ class TestRunner implements Serializable {
                     export GOROOT=${globalGoDist}/go
                     export PATH=\$GOROOT/bin:\$PATH
                     
-                    # 2. Sync Config File
-                    # We copy it to the root and the employee folder just to be safe
-                    cp config.yaml employee/config.yaml || true
-                    
-                    # 3. Define the Absolute Path
-                    # Use a shell variable to ensure it's not empty
-                    ABS_CONFIG=\$(pwd)/config.yaml
+                    # 2. Set the config path to the current directory
+                    # Since we are already inside the 'employee' folder,
+                    # config.yaml is right here.
+                    export CONFIG_PATH=\$(pwd)/config.yaml
                     
                     echo "--- Debugging Go Test Environment ---"
                     echo "Current Directory: \$(pwd)"
-                    echo "Looking for config at: \$ABS_CONFIG"
+                    ls -lh config.yaml || echo "❌ config.yaml NOT FOUND in \$(pwd)"
                     
-                    # 4. Run Test with DIRECT variable injection
-                    # This ensures the Go process sees the variable immediately
-                    CONFIG_PATH=\$ABS_CONFIG go test ./employee/... -v
+                    # 3. Run tests using '.' 
+                    # We use './...' to test everything in the CURRENT directory
+                    CONFIG_PATH=\$CONFIG_PATH go test ./... -v
                 """
                 break
 
