@@ -32,7 +32,7 @@ def call(Map config = [:]) {
         environment {
             // Name of the single monolith repository in ECR
             MONO_REPO_NAME = "ot-microservices"
-            IMAGE_TAG      = "${env.GIT_COMMIT}"
+            IMAGE_TAG      = "1.0.${env.BUILD_NUMBER}"
             ECR_URL        = "574621078554.dkr.ecr.us-east-1.amazonaws.com"
         }
 
