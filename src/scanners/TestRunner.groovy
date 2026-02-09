@@ -10,26 +10,22 @@ class TestRunner implements Serializable {
         switch(lang) {
             case 'go':
                 def globalGoDist = "${workspace}/../.global-go-dist"
-    steps.sh """
-        export GOROOT=${globalGoDist}/go
-        export PATH=\$GOROOT/bin:\$PATH
-        
-        # 1. Set the variable we THINK it wants
-        export CONFIG_PATH=\$(pwd)/config.yaml
-        
-        # 2. Some Go projects expect 'CONF_PATH' or 'CONFIG' 
-        # Let's set the most common ones just in case
-        export CONF_PATH=\$CONFIG_PATH
-        export CONFIG=\$CONFIG_PATH
-        
-        echo "--- Debugging Employee Service ---"
-        echo "Current Dir: \$(pwd)"
-        ls -la config.yaml
-        
-        # 3. Use 'env' to inject the variable directly into the test execution
-        # We also run from the current directory
-        env CONFIG_PATH=\$CONFIG_PATH CONF_PATH=\$CONFIG_PATH go test ./... -v
-    """
+
+steps.sh """
+    export GOROOT=${globalGoDist}/go
+    export PATH=\$GOROOT/bin:\$PATH
+
+    # ✅ Correct env variable expected by the Go app
+    export CONFIG_FILE=\$(pwd)/config.yaml
+
+    echo "--- Debugging Employee Service ---"
+    echo "Current Dir: \$(pwd)"
+    echo "Using CONFIG_FILE=\$CONFIG_FILE"
+    ls -la config.yaml
+
+    # Run tests with correct env
+    env CONFIG_FILE=\$CONFIG_FILE go test ./... -v
+"""
                 break
 
             case 'python':
