@@ -11,24 +11,25 @@ class TestRunner {
 
         switch(lang) {
             case 'go':
-                def globalGo = "${workspace}/../.global-go-dist"
-                steps.sh """
-                    export GOROOT=${globalGo}/go
-                    export PATH=\$GOROOT/bin:\$PATH
-                    
-                    # 1. Check if config.yaml exists in the repo
-                    if [ -f "config.yaml" ]; then
-                        echo "✅ Using config.yaml from repository"
-                        export CONFIG_PATH=\$(pwd)/config.yaml
-                    else
-                        echo "⚠️ config.yaml not found in employee directory!"
-                        # Optional: Fallback to a template or fail
-                        exit 1
-                    fi
-                    
-                    # 2. Run tests
-                    go test ./... -v || echo "Tests failed but continuing"
-                """
+                def globalGoDist = "${workspace}/../.global-go-dist"
+    steps.sh """
+        # 1. Setup Environment
+        export GOROOT=${globalGoDist}/go
+        export PATH=\$GOROOT/bin:\$PATH
+        
+        # 2. Fix Config Path (The "open: no such file" fix)
+        # Ensure the file exists in the current directory for the test
+        if [ -f "config.yaml" ]; then
+            export CONFIG_PATH=\$(pwd)/config.yaml
+            echo "✅ CONFIG_PATH set to \$CONFIG_PATH"
+        else
+            echo "❌ ERROR: config.yaml not found in \$(pwd)"
+            exit 1
+        fi
+
+        # 3. Run Tests
+        go test ./... -v
+    """
                 break
 
             case 'python':
