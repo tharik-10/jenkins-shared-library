@@ -45,7 +45,14 @@ class LintScanner implements Serializable {
 
             case 'node':
                 def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
-                steps.sh "export PATH=${nodeHome}/bin:\$PATH && npx eslint . --fix-dry-run || echo 'No lint config'"
+steps.sh """
+    export PATH=${nodeHome}/bin:\$PATH
+    if [ -f "eslint.config.js" ]; then
+        npx eslint src
+    else
+        echo "⚠️ ESLint config not found, skipping lint"
+    fi
+"""
                 break
         }
     }
