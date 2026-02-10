@@ -20,22 +20,34 @@ class LintScanner implements Serializable {
 
             case 'go':
                 steps.sh """
-                    if [ ! -d "${globalGoDist}/go" ]; then
-                        curl -LO https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
-                        mkdir -p ${globalGoDist}
-                        tar -C ${globalGoDist} -xzf go1.21.6.linux-amd64.tar.gz
-                    fi
+                    set -e
 
-                    export GOROOT=${globalGoDist}/go
-                    export PATH=\$GOROOT/bin:${localBin}:\$PATH
+    # Install Go if not present
+    if [ ! -d "${globalGoDist}/go" ]; then
+        curl -LO https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
+        mkdir -p ${globalGoDist}
+        tar -C ${globalGoDist} -xzf go1.21.6.linux-amd64.tar.gz
+    fi
 
-                    if [ ! -f "${localBin}/golangci-lint" ]; then
-                        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${localBin} v1.55.2
-                    fi
+    export GOROOT=${globalGoDist}/go
+    export PATH=\$GOROOT/bin:${localBin}:\$PATH
 
-                    go mod tidy || true
-                    ${localBin}/golangci-lint run ./... --timeout=5m --skip-dirs=vendor
-                """
+    # Install golangci-lint if missing
+    if [ ! -f "${localBin}/golangci-lint" ]; then
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+          | sh -s -- -b ${localBin} v1.55.2
+    fi
+
+    # Move into Go module
+    cd employee
+
+    # Ensure module graph is valid
+    go mod tidy
+
+    echo "🔍 Running golangci-lint..."
+    golangci-lint run ./... --timeout=5m --skip-dirs=vendor
+"""
+
                 break
 
             case 'java':
