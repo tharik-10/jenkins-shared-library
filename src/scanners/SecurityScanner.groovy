@@ -10,23 +10,35 @@ class SecurityScanner implements Serializable {
         switch(lang) {
             case 'python':
                 steps.sh """
-                    export PATH=\$PATH:\$HOME/.local/bin
-                    python3 -m pip install --user --upgrade pip setuptools wheel
-                    python3 -m pip install --user safety bandit || true
-                    
-                    echo "--- Running Security Scan ---"
-                    python3 -m safety check --full-report || true
-                    python3 -m bandit -r . -x ./venv -f screen || true
-                """
+    export PATH=\$PATH:\$HOME/.local/bin
+
+    echo "🔧 Installing security tools..."
+    python3 -m pip install --user --upgrade pip setuptools wheel
+    python3 -m pip install --user pip-audit bandit || true
+
+    echo "🔐 Attempting to auto-fix vulnerable dependencies..."
+    pip-audit --fix || true
+
+    echo "📊 Running post-fix vulnerability report..."
+    pip-audit || true
+
+    echo "🛡 Running Bandit source security scan..."
+    python3 -m bandit -r . -x ./venv -f screen || true
+"""
                 break
                 
             case 'node':
                 def nodeHome = steps.tool name: 'NodeJS-20', type: 'nodejs'
-                steps.sh """
-                    export PATH=${nodeHome}/bin:\$PATH
-                    npm audit fix || true
-                    npm audit --audit-level=high || true 
-                """
+steps.sh """
+    export PATH=${nodeHome}/bin:\$PATH
+
+    echo "🔐 Running npm audit auto-fix (safe mode)..."
+    npm audit fix --package-lock-only || true
+
+    echo "📊 Reporting remaining high/critical vulnerabilities..."
+    npm audit --audit-level=high || true
+"""
+
                 break
                 
             case 'go':
