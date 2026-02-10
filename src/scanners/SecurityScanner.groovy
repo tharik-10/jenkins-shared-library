@@ -31,16 +31,28 @@ class SecurityScanner implements Serializable {
                 
             case 'go':
                 def globalGoDist = "${workspace}/../.global-go-dist"
-                steps.sh """
-                    export GOROOT=${globalGoDist}/go
-                    export PATH=\$GOROOT/bin:${localBin}:\$PATH
-                    
-                    if ! command -v nancy &> /dev/null; then
-                        curl -sfL https://github.com/sonatype-nexus-community/nancy/releases/download/v1.0.42/nancy-v1.0.42-linux-amd64.tar.gz | tar -C ${localBin} -xz nancy
-                    fi
-                    
-                    go list -m all | ${localBin}/nancy sleuth || echo "Nancy scan failed"
-                """
+    steps.withCredentials([
+        usernamePassword(
+            credentialsId: 'ossindex-creds',
+            usernameVariable: 'OSS_USER',
+            passwordVariable: 'OSS_TOKEN'
+        )
+    ]) {
+        steps.sh """
+            export GOROOT=${globalGoDist}/go
+            export PATH=\$GOROOT/bin:${localBin}:\$PATH
+
+            if [ ! -f "${localBin}/nancy" ]; then
+                curl -sfL https://github.com/sonatype-nexus-community/nancy/releases/download/v1.0.42/nancy-v1.0.42-linux-amd64.tar.gz \
+                | tar -C ${localBin} -xz nancy
+            fi
+
+            go list -m all | ${localBin}/nancy sleuth \
+              --username \$OSS_USER \
+              --token \$OSS_TOKEN \
+              || echo "⚠️ Nancy scan failed"
+        """
+    }
                 break
 
             case 'java':
